@@ -4,18 +4,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
 import javax.swing.JFrame;
 
-public class Listener implements ActionListener, WindowListener, KeyListener {
+public class Listener implements ActionListener, WindowListener, KeyListener, MouseListener, MouseMotionListener {
 	
 	protected static int state=JFrame.NORMAL;
 	
 	protected static Caller keyDownCaller = new Caller();
 	protected static Caller keyUpCaller = new Caller();
 	protected static Caller mouseDownCaller = new Caller();
+	protected static Caller mouseUpCaller = new Caller();
 	protected static Caller mouseMoveCaller = new Caller();
 	
 	@Override
@@ -59,7 +63,7 @@ public class Listener implements ActionListener, WindowListener, KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (!keyDownCaller.isEmpty())
-		keyDownCaller.call(e.getKeyText(e.getKeyCode()));
+			keyDownCaller.call(e.getKeyText(e.getKeyCode()));
 	}
 
 	@Override
@@ -69,9 +73,36 @@ public class Listener implements ActionListener, WindowListener, KeyListener {
 	}
 
 	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void keyTyped(KeyEvent e) {}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {	
+		if (!mouseMoveCaller.isEmpty())
+			mouseMoveCaller.call(e.getX(),e.getY());
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {}
+
+	@Override
+	public void mouseExited(MouseEvent e) {}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (!mouseDownCaller.isEmpty())
+			mouseDownCaller.call(e.getX(),e.getY(),e.getButton());
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if (!mouseUpCaller.isEmpty())
+			mouseUpCaller.call(e.getX(),e.getY(),e.getButton());
 	}
 
 }

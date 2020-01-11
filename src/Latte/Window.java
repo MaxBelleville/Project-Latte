@@ -19,8 +19,7 @@ public class Window {
 	private boolean showMin=true;
 	private boolean showMax=true;
 	private boolean fullscreen=false;
-	private boolean resizable=false;
-
+	
 	public Window title(String title) {
 		this.title=title;
 		return this;
@@ -32,10 +31,6 @@ public class Window {
 	}
 	public Window icon(String iconPath) {
 		this.iconPath = iconPath;
-		return this;
-	}
-	public Window resizable() {
-		this.resizable = true;
 		return this;
 	}
 	public Window hideMinMax() {
@@ -60,11 +55,12 @@ public class Window {
 			Listener.state=Window.jframe.getExtendedState();
 			jframe.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		}
-		jframe.setResizable(resizable);
 		jframe.setSize(width, height);
 		jframe.setUndecorated(true);
 		jframe.addWindowListener(listener);
 		jframe.addKeyListener(listener);
+		jframe.addMouseListener(listener);
+		jframe.addMouseMotionListener(listener);
 		jframe.setLocationRelativeTo(null);
 		setupMenu();
 		panel = new drawPanel();

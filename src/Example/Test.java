@@ -11,7 +11,7 @@ public class Test {
 	private static int dirX=0;
 	private static int dirY=0;
 	public static void main(String[] args) {
-		Handler handler = new Window().fullscreen().hideMinMax().init();
+		Handler handler = new Window().hideMinMax().init();
 		handler.draw("update");
 		handler.onKeyDown("keyPress");
 		handler.onKeyUp("keyRelease");
