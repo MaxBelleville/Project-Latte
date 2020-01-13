@@ -18,6 +18,7 @@ public class Window {
 	private int height=500;
 	private boolean showMin=true;
 	private boolean showMax=true;
+	private boolean showMenu=true;
 	private boolean fullscreen=false;
 	
 	public Window title(String title) {
@@ -34,20 +35,25 @@ public class Window {
 		return this;
 	}
 	public Window hideMinMax() {
-		this.showMin =false;
-		this.showMax =false;
+		showMin =false;
+		showMax =false;
 		return this;
 	}
 	public Window hideMax() {
-		this.showMax =false;
+		showMax =false;
 		return this;
 	}
 	public Window hideMin() {
-		this.showMin =false;
+		showMin =false;
 		return this;
 	}
+	public Window hideMenu() {
+		showMenu=false;
+		return this;
+	}
+	
 	public Window fullscreen() {
-		this.fullscreen=true;
+		fullscreen=true;
 		return this;
 	}
 	public Handler init() {
@@ -65,6 +71,7 @@ public class Window {
 		setupMenu();
 		panel = new drawPanel();
 		jframe.setContentPane(panel);
+		jframe.getJMenuBar().setVisible(showMenu);
 		jframe.setVisible(true);
 		return new Handler();
 	}

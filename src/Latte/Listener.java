@@ -16,6 +16,9 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	
 	protected static int state=JFrame.NORMAL;
 	
+	protected static Caller closeCaller = new Caller();
+	protected static Caller minCaller = new Caller();
+	protected static Caller maxCaller = new Caller();
 	protected static Caller keyDownCaller = new Caller();
 	protected static Caller keyUpCaller = new Caller();
 	protected static Caller mouseDownCaller = new Caller();
@@ -25,10 +28,17 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 		state=Window.jframe.getExtendedState();
-		if(evt.getActionCommand().equals("X"))
+		
+		if(!closeCaller.isEmpty()&&evt.getActionCommand().equals("X"))
+			closeCaller.call();
+		else if(evt.getActionCommand().equals("X"))
 			System.exit(0);
+		else if(!minCaller.isEmpty()&&evt.getActionCommand().equals("_"))
+			minCaller.call();
 		else if(evt.getActionCommand().equals("_"))
 			Window.jframe.setExtendedState(JFrame.ICONIFIED);
+		else if(!maxCaller.isEmpty())
+			maxCaller.call();
 		else {
 			if(Window.jframe.getExtendedState()==JFrame.NORMAL)
 				Window.jframe.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -76,7 +86,10 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	public void keyTyped(KeyEvent e) {}
 
 	@Override
-	public void mouseDragged(MouseEvent e) {}
+	public void mouseDragged(MouseEvent e) {
+		if (!mouseMoveCaller.isEmpty())
+			mouseMoveCaller.call(e.getX(),e.getY());
+	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {	

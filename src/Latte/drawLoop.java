@@ -29,12 +29,6 @@ public class drawLoop {
 		      double delta = updateLength / ((double)OPTIMAL_TIME);
 		      lastFpsTime += updateLength;
 		      fps++;
-//		      if (lastFpsTime >= 1000000000)
-//		      {
-//		         System.out.println("(FPS: "+fps+")");
-//		         lastFpsTime = 0;
-//		         fps = 0;
-//		      }
 		      if(width!=Window.jframe.getWidth()||height!=Window.jframe.getHeight()) {
 		    	  width=Window.jframe.getWidth();
 		    	  height=Window.jframe.getHeight();
