@@ -1,5 +1,7 @@
 package Latte;
 
+import java.awt.EventQueue;
+import java.awt.KeyEventDispatcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -9,10 +11,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.HashMap;
 
 import javax.swing.JFrame;
 
-public class Listener implements ActionListener, WindowListener, KeyListener, MouseListener, MouseMotionListener {
+public class Listener implements ActionListener, WindowListener, KeyEventDispatcher, MouseListener, MouseMotionListener {
 	
 	protected static int state=JFrame.NORMAL;
 	
@@ -24,6 +27,7 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	protected static Caller mouseDownCaller = new Caller();
 	protected static Caller mouseUpCaller = new Caller();
 	protected static Caller mouseMoveCaller = new Caller();
+	protected static HashMap<String, Boolean> isKeyPressed=new HashMap<String, Boolean>();
 	
 	@Override
 	public void actionPerformed(ActionEvent evt) {
@@ -71,21 +75,6 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	public void windowOpened(WindowEvent e) {}
 
 	@Override
-	public void keyPressed(KeyEvent e) {
-		if (!keyDownCaller.isEmpty())
-			keyDownCaller.call(e.getKeyText(e.getKeyCode()));
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {	
-		if (!keyUpCaller.isEmpty())
-			keyUpCaller.call(e.getKeyText(e.getKeyCode()));
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {}
-
-	@Override
 	public void mouseDragged(MouseEvent e) {
 		if (!mouseMoveCaller.isEmpty())
 			mouseMoveCaller.call(e.getX(),e.getY());
@@ -116,6 +105,20 @@ public class Listener implements ActionListener, WindowListener, KeyListener, Mo
 	public void mouseReleased(MouseEvent e) {
 		if (!mouseUpCaller.isEmpty())
 			mouseUpCaller.call(e.getX(),e.getY(),e.getButton());
+	}
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent e) {
+		isKeyPressed.put(e.getKeyText(e.getKeyCode()),(e.getID()==KeyEvent.KEY_PRESSED)?true:false);
+		if(e.getID()==KeyEvent.KEY_PRESSED) {
+		if (!keyDownCaller.isEmpty())
+			keyDownCaller.call(e.getKeyText(e.getKeyCode()));
+		}
+		else {
+		if (!keyUpCaller.isEmpty())
+			keyUpCaller.call(e.getKeyText(e.getKeyCode()));
+		}
+		return false;
 	}
 
 }

@@ -9,8 +9,6 @@ public class drawLoop {
 	private final int TARGET_FPS = 60;
 	private final long OPTIMAL_TIME = 1000000000 / TARGET_FPS;
 	private boolean running=true;
-	private long lastFpsTime=0;
-	private int fps=0;
 	private int width=0;
 	private int height=0;
 	private BufferedImage img;
@@ -27,8 +25,6 @@ public class drawLoop {
 		      long updateLength = now - lastLoopTime;
 		      lastLoopTime = now;
 		      double delta = updateLength / ((double)OPTIMAL_TIME);
-		      lastFpsTime += updateLength;
-		      fps++;
 		      if(width!=Window.jframe.getWidth()||height!=Window.jframe.getHeight()) {
 		    	  width=Window.jframe.getWidth();
 		    	  height=Window.jframe.getHeight();

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public class Window {
 		jframe.setSize(width, height);
 		jframe.setUndecorated(true);
 		jframe.addWindowListener(listener);
-		jframe.addKeyListener(listener);
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(listener);
 		jframe.addMouseListener(listener);
 		jframe.addMouseMotionListener(listener);
 		jframe.setLocationRelativeTo(null);
