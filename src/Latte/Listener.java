@@ -1,11 +1,9 @@
 package Latte;
 
-import java.awt.EventQueue;
 import java.awt.KeyEventDispatcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -109,16 +107,15 @@ public class Listener implements ActionListener, WindowListener, KeyEventDispatc
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
-		isKeyPressed.put(e.getKeyText(e.getKeyCode()),(e.getID()==KeyEvent.KEY_PRESSED)?true:false);
+		isKeyPressed.put(KeyEvent.getKeyText(e.getKeyCode()),(e.getID()==KeyEvent.KEY_PRESSED)?true:false);
 		if(e.getID()==KeyEvent.KEY_PRESSED) {
 		if (!keyDownCaller.isEmpty())
-			keyDownCaller.call(e.getKeyText(e.getKeyCode()));
+			keyDownCaller.call(KeyEvent.getKeyText(e.getKeyCode()));
 		}
 		else {
 		if (!keyUpCaller.isEmpty())
-			keyUpCaller.call(e.getKeyText(e.getKeyCode()));
+			keyUpCaller.call(KeyEvent.getKeyText(e.getKeyCode()));
 		}
 		return false;
 	}
-
 }

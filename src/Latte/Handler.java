@@ -82,8 +82,8 @@ public class Handler {
 		String classStr = new Exception().getStackTrace()[1].getClassName();
 		Caller collideCaller=new Caller();
 		collideCaller.getMethod(classStr, methodStr,int.class,int.class);
-		for (Object2D collidee: group.get()) {
-		Vector2D vec=collidee.satDetection(collider);
+		for (Object2D colidee: group.get()) {
+		Vector2D vec=colidee.satDetection(collider);
 		if(vec!=null)
 			collideCaller.call((int)vec.getX(),(int)vec.getY());
 		}
@@ -92,8 +92,8 @@ public class Handler {
 		String classStr = new Exception().getStackTrace()[1].getClassName();
 		Caller collideCaller=new Caller();
 		collideCaller.getMethod(classStr, methodStr);
-		for (Object2D collidee: group.get()) {
-		Vector2D vec=collidee.satDetection(collider);
+		for (Object2D colidee: group.get()) {
+		Vector2D vec=colidee.satDetection(collider);
 		if(vec==null)
 			collideCaller.call();
 		}

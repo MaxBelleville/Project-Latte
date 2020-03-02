@@ -2,18 +2,20 @@ package Latte;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
+import java.awt.Point;
 
 import javax.swing.*;
 
 public class Window {
 	private String title="My Project";
 	private String iconPath="";
+	protected static JLabel titleLabel;
+	protected static boolean displayFps=false;
 	protected static JFrame jframe = new JFrame();
 	protected static drawPanel panel;
+	protected static Point oldSize = new Point();
 	private Listener listener =new Listener();
 	private int width=500;
 	private int height=500;
@@ -34,6 +36,12 @@ public class Window {
 	public Window icon(String iconPath) {
 		this.iconPath = iconPath;
 		return this;
+	}
+	public static int getWidth() {
+		return jframe.getWidth();
+	}
+	public static int getHeight() {
+		return jframe.getHeight();
 	}
 	public Window hideMinMax() {
 		showMin =false;
@@ -71,6 +79,7 @@ public class Window {
 		jframe.setLocationRelativeTo(null);
 		setupMenu();
 		panel = new drawPanel();
+		panel.setBackground(Color.white);
 		jframe.setContentPane(panel);
 		jframe.getJMenuBar().setVisible(showMenu);
 		jframe.setVisible(true);
@@ -96,15 +105,15 @@ public class Window {
 		JLabel icon = new JLabel();
 		icon.setIcon(scaledImg);
 		JMenuBar menu = new JMenuBar();
-		JLabel title = new JLabel(this.title);
+		titleLabel = new JLabel(this.title);
 		JButton minButton = setupButton("_",new Color(50, 150, 255));
 		JButton maxButton = setupButton("■",new Color(50, 150, 255));
 		JButton closeButton = setupButton("X",new Color(255, 0, 0));
-		title.setForeground(Color.white);
+		titleLabel.setForeground(Color.white);
 		menu.setBackground(Color.black);
 		menu.add(icon);
 		menu.add(Box.createRigidArea(new Dimension(10, 10)));
-		menu.add(title);
+		menu.add(titleLabel);
 		menu.add(Box.createHorizontalGlue());
 		if (showMin) menu.add(minButton);
 		if (showMax) menu.add(maxButton);
@@ -112,5 +121,11 @@ public class Window {
 		menu.setBorder(null);
 		jframe.setJMenuBar(menu);	
 	}
-	
+	public Window displayFps() {
+		displayFps=true;
+		return this;
+	}
+	public static Object2D getWalls() {
+		return new Object2D().addRect(0,0,getWidth(),getHeight());
+	}
 }

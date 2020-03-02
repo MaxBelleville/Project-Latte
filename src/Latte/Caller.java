@@ -1,6 +1,5 @@
 package Latte;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class Caller {
@@ -31,6 +30,7 @@ public class Caller {
 					callerMethod.invoke(callerClass.newInstance(),params);
 				} catch (Exception e) {
 					System.out.println("Error function: "+methodStr +" in class: "+ callerClass.getName()+ " not found. Perhaps your missing parameters?");
+					e.printStackTrace();
 					onError=true;
 				}
 		}
