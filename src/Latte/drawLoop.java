@@ -43,8 +43,6 @@ public class drawLoop {
 		         lastFpsTime = 0;
 		         fps = 0;
 		      }
-		      g.setColor(new Color(1f,1f,1f,0.01f));//Still have no idea how this works.
-		      g.fillRect(0, 0, width, height);
 		      g.setColor(Color.white);
 		      g.fillRect(0,0,width,height);
 		      g.setColor(Color.black);

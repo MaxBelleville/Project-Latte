@@ -7,6 +7,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 
 public class Window {
 	private String title="My Project";
@@ -15,8 +16,11 @@ public class Window {
 	protected static boolean displayFps=false;
 	protected static JFrame jframe = new JFrame();
 	protected static drawPanel panel;
-	protected static Point oldSize = new Point();
 	private Listener listener =new Listener();
+	private Color closeColor=new Color(255, 0, 0);
+	private Color buttonColor=new Color(50, 150, 255);
+	private Color textColor =Color.white;
+	private Color background=Color.black;
 	private int width=500;
 	private int height=500;
 	private boolean showMin=true;
@@ -82,6 +86,7 @@ public class Window {
 		panel.setBackground(Color.white);
 		jframe.setContentPane(panel);
 		jframe.getJMenuBar().setVisible(showMenu);
+		panel.setBorder(new LineBorder(new Color(0,0,0,0.5f),1));
 		jframe.setVisible(true);
 		return new Handler();
 	}
@@ -89,8 +94,8 @@ public class Window {
 		JButton button = new JButton(title);
 		button.setFocusable(false);
 		button.setBorder(BorderFactory.createEmptyBorder(2, 15, 3, 15));
-		button.setForeground(Color.white);
-		button.setBackground(Color.black);
+		button.setForeground(textColor);
+		button.setBackground(background);
 		button.addMouseListener(new java.awt.event.MouseAdapter() {
 			public void mouseEntered(java.awt.event.MouseEvent evt) {button.setBackground(hoverColor);}
 			public void mouseExited(java.awt.event.MouseEvent evt) {button.setBackground(Color.black);}
@@ -106,11 +111,11 @@ public class Window {
 		icon.setIcon(scaledImg);
 		JMenuBar menu = new JMenuBar();
 		titleLabel = new JLabel(this.title);
-		JButton minButton = setupButton("_",new Color(50, 150, 255));
-		JButton maxButton = setupButton("■",new Color(50, 150, 255));
-		JButton closeButton = setupButton("X",new Color(255, 0, 0));
-		titleLabel.setForeground(Color.white);
-		menu.setBackground(Color.black);
+		JButton minButton = setupButton("_",buttonColor);
+		JButton maxButton = setupButton("■",buttonColor);
+		JButton closeButton = setupButton("X",closeColor);
+		titleLabel.setForeground(textColor);
+		menu.setBackground(background);
 		menu.add(icon);
 		menu.add(Box.createRigidArea(new Dimension(10, 10)));
 		menu.add(titleLabel);

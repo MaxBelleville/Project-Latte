@@ -25,6 +25,7 @@ public class Listener implements ActionListener, WindowListener, KeyEventDispatc
 	protected static Caller mouseDownCaller = new Caller();
 	protected static Caller mouseUpCaller = new Caller();
 	protected static Caller mouseMoveCaller = new Caller();
+	protected static Vector2D mousePos=new Vector2D(0,0);
 	protected static HashMap<String, Boolean> isKeyPressed=new HashMap<String, Boolean>();
 	
 	@Override
@@ -74,8 +75,15 @@ public class Listener implements ActionListener, WindowListener, KeyEventDispatc
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
+		moveWindow(e.getXOnScreen(),e.getYOnScreen());
 		if (!mouseMoveCaller.isEmpty())
 			mouseMoveCaller.call(e.getX(),e.getY());
+	}
+
+	private void moveWindow(int x, int y) {
+		if(!(mousePos.getX()==0&&mousePos.getY()==0)) {
+			Window.jframe.setLocation(x-(int)mousePos.getX(),y-(int)mousePos.getY());
+		}
 	}
 
 	@Override
@@ -95,12 +103,23 @@ public class Listener implements ActionListener, WindowListener, KeyEventDispatc
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		setMousePos(e.getXOnScreen(),e.getYOnScreen(),e.getX(),e.getY());
 		if (!mouseDownCaller.isEmpty())
 			mouseDownCaller.call(e.getX(),e.getY(),e.getButton());
 	}
 
+	private void setMousePos(int x, int y,int currX, int currY) {
+		int maxX=Window.getWidth()+Window.jframe.getX();
+		int maxY=Window.getHeight()+Window.jframe.getY();
+		int minX=Window.jframe.getX();
+		int minY=Window.jframe.getY();
+		if(state==JFrame.NORMAL&&(x<minX+10||x>maxX-10||y<minY+10||y>maxY-10))
+			mousePos.setPos(currX,currY);
+	}
+
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		mousePos.setPos(0, 0);
 		if (!mouseUpCaller.isEmpty())
 			mouseUpCaller.call(e.getX(),e.getY(),e.getButton());
 	}

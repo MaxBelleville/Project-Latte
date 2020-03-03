@@ -1,5 +1,4 @@
 package Example;
-import java.awt.Color;
 import java.awt.Graphics;
 
 import Latte.*;
@@ -7,22 +6,28 @@ import Latte.*;
 public class Test {
 	private static Handler handler;
 	private static Object2D obj =new Object2D();
-	private static Vector2D vec = new Vector2D(5,5);
 	public static void main(String[] args) {
-		handler = new Window().displayFps().fullscreen().init();
-		obj.addOval(50,50,20,20);
+		handler = new Window().displayFps().title("Project Supersoft")
+				.hideMax().fullscreen().init();
 		handler.draw("update");
+		handler.onMouseMove("mouseMove");
+		handler.onMouseDown("mouseDown");
+		obj.addRect(0, 0, 20, 20);
+	}
+	public void mouseMove(int x, int y) {
+		obj.lookAt(x, y);
+	}
+	public void mouseDown(int x, int y, int button) {
+		if(button==3) {
+			obj.updatePos(x-10, y-20);
+		}
 	}
 	public void update(Graphics g) {
+		if(handler.getKeyPressed("W"))obj.addPosPolar(5);
+		if(handler.getKeyPressed("A"))obj.addPosPolar(0,3);
+		if(handler.getKeyPressed("D"))obj.addPosPolar(0,-3);
+		if(handler.getKeyPressed("S"))obj.addPosPolar(-5);
+		obj.rotate();
 		obj.fill(g);
-		obj.updatePos((int)obj.getPos().getX()+(int)vec.getX(),(int)obj.getPos().getY()+(int)vec.getY());
-		obj.rotate(5);
-		handler.onAvoid("Exit",obj,Window.getWalls());
-	}
-	public void Exit() {
-		obj.updatePos((int)obj.getPos().getX()-(int)vec.getX(),(int)obj.getPos().getY()-(int)vec.getY());
-		double x=((int)(Math.random() * 50)-25);
-		double y=((int)(Math.random() * 50)-25);
-		vec.setPos(x,y);
 	}
 }

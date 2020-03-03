@@ -22,16 +22,25 @@ public class Vector2D {
 		  return (x * vec.getY()) - (y * vec.getX());
 		}
 	public Vector2D unitVector() {
-		double mag=Math.sqrt(x*x+y*y);
+		double mag=getMag();
 		double x2=Math.round((x/mag));
 		double y2=Math.round((y/mag)); 
 		if(x/mag<0)x2=-Math.round(Math.abs(x/mag));
 		if(y/mag<0)y2=-Math.round(Math.abs(y/mag));
 		return new Vector2D(x2,y2);
 	}
+	public double getMag() {
+		return Math.sqrt(x*x+y*y);
+	}
+	public double getAngle() {
+		double angle= Math.atan2(y,x);
+		if(angle<0)angle+=2*Math.PI;
+		return angle;
+	}
+	
 	public Vector2D convertVector(double mag, double angle) {
-		x=mag*Math.cos(Math.toRadians(angle));
-		y=mag*Math.sin(Math.toRadians(angle));
+		x=mag*Math.cos(angle);
+		y=-mag*Math.sin(angle);
 		return this;
 	}
 }

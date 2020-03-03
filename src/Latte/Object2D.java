@@ -35,6 +35,20 @@ public class Object2D {
 		vecs.set(i,new Vector2D(x,y));
 		vecsOrg.set(i,new Vector2D(x,y));
 	}
+	public void addPosPolar(double mag) {
+		Vector2D vec = new Vector2D().convertVector(mag,angle);
+		int x=(int)(vec.getX()+pos.getX());
+		int y=(int)(vec.getY()+pos.getY());
+		updatePos(x,y);
+	}
+	
+	public void addPosPolar(double mag, double mag2) {
+		Vector2D vec = new Vector2D().convertVector(mag,angle);
+		Vector2D vecH = new Vector2D().convertVector(mag2,angle+90);
+		int x=(int)(vec.getX()+vecH.getX()+pos.getX());
+		int y=(int)(vec.getY()+vecH.getY()+pos.getY());
+		updatePos(x,y);
+	}
 	public void updatePos(int x, int y) {
 		displacement.setPos(x-pos.getX(),y-pos.getY());
 		pos.setPos(x,y);
@@ -172,6 +186,11 @@ public class Object2D {
 		this.angle+=Math.toRadians(angle%360);
 		rotate();
 	}
+	public void lookAt(int x, int y) {
+		double distX=pos.getX()-x;
+		double distY=pos.getY()-y;
+		angle=new Vector2D(-distX,distY).getAngle();
+	}
 	public void rotate() {
 		Vector2D vec = getCenter();
 		Vector2D camPos = Camera2D.getPos();
@@ -179,7 +198,7 @@ public class Object2D {
 			double x=vecsOrg.get(i).getX()-vec.getX();
 			double y=vecsOrg.get(i).getY()-vec.getY();
 			double xRot = x*Math.cos(angle)-y*Math.sin(angle);
-			double yRot = x*Math.sin(angle)+y*Math.cos(angle);
+			double yRot = -(x*Math.sin(angle)+y*Math.cos(angle));
 			vecs.set(i,new Vector2D(vec.getX()+xRot+pos.getX()+camPos.getX(),vec.getY()+yRot+pos.getY()+camPos.getY()));
 		}
 	}
