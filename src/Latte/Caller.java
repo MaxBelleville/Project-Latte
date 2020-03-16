@@ -27,7 +27,7 @@ public class Caller {
 	public void call(Object...params) {
 		if(params.length==callerParams.length&&!onError) {
 				try {
-					callerMethod.invoke(callerClass.newInstance(),params);
+					callerMethod.invoke(null,params);
 				} catch (Exception e) {
 					System.out.println("Error function: "+methodStr +" in class: "+ callerClass.getName()+ " not found. Perhaps your missing parameters?");
 					e.printStackTrace();

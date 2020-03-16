@@ -4,10 +4,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
-import java.awt.Point;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+
+import javafx.embed.swing.JFXPanel;
 
 public class Window {
 	private String title="My Project";
@@ -21,6 +22,7 @@ public class Window {
 	private Color buttonColor=new Color(50, 150, 255);
 	private Color textColor =Color.white;
 	private Color background=Color.black;
+	protected static Color windowBack=Color.white;
 	private int width=500;
 	private int height=500;
 	private boolean showMin=true;
@@ -83,7 +85,7 @@ public class Window {
 		jframe.setLocationRelativeTo(null);
 		setupMenu();
 		panel = new drawPanel();
-		panel.setBackground(Color.white);
+		panel.setBackground(windowBack);
 		jframe.setContentPane(panel);
 		jframe.getJMenuBar().setVisible(showMenu);
 		panel.setBorder(new LineBorder(new Color(0,0,0,0.5f),1));
@@ -106,13 +108,14 @@ public class Window {
 	
 	private void setupMenu() {
 		Image image = new ImageIcon(iconPath).getImage();
+		jframe.setIconImage(image);
 		ImageIcon scaledImg = new ImageIcon(image.getScaledInstance(16, 16, Image.SCALE_SMOOTH));
 		JLabel icon = new JLabel();
 		icon.setIcon(scaledImg);
 		JMenuBar menu = new JMenuBar();
 		titleLabel = new JLabel(this.title);
 		JButton minButton = setupButton("_",buttonColor);
-		JButton maxButton = setupButton("■",buttonColor);
+		JButton maxButton = setupButton("[=]",buttonColor);
 		JButton closeButton = setupButton("X",closeColor);
 		titleLabel.setForeground(textColor);
 		menu.setBackground(background);
@@ -130,7 +133,19 @@ public class Window {
 		displayFps=true;
 		return this;
 	}
-	public static Object2D getWalls() {
+	public static Object2D getWindowBox() {
 		return new Object2D().addRect(0,0,getWidth(),getHeight());
+	}
+	public static Group2D getBorder(int dx, int dy) {
+		Group2D group = new Group2D();
+		group.add(new Object2D().addRect(0,0,dx,getHeight()));
+		group.add(new Object2D().addRect(0,0,getWidth(),dy));
+		group.add(new Object2D().addRect(0,getHeight()-dy,getWidth(),dy));
+		group.add(new Object2D().addRect(getWidth()-dy,0,dx,getHeight()));
+		return group;
+	}
+	public Window setBackground(Color color) {
+		windowBack=color;
+		return this;
 	}
 }

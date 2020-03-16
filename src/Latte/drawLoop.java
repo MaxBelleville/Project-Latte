@@ -1,7 +1,7 @@
 package Latte;
 
 import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 public class drawLoop {
@@ -10,12 +10,22 @@ public class drawLoop {
 	private final long OPTIMAL_TIME = 1000000000 / TARGET_FPS;
 	private double fps=0;
 	private double lastFpsTime=0;
-	private Graphics g;
-	private boolean running=true;
+	private Graphics2D g;
+	private static boolean running=true;
 	private int width=0;
 	private int height=0;
 	private BufferedImage img=null;
-	public static Caller caller;
+	private static Caller caller;
+	public static Caller animator;
+	public static long animationTime=0;
+	public static long endTime=0;
+	protected static void pause(boolean canDraw) {
+		running=canDraw;
+		new drawLoop(canDraw);
+	}
+	protected static boolean isPaused() {
+		return running;
+	}
 	protected static void setCaller(Caller caller) {
 		drawLoop.caller = caller;
 	}
@@ -26,10 +36,8 @@ public class drawLoop {
 		      if(width!=Window.getWidth()||height!=Window.getHeight()) {
 		    	  width=Window.getWidth();
 		    	  height=Window.getHeight();
-		    	  img = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
-		    	  g= img.getGraphics();
-		    	  g.setColor(Color.white);
-			      g.fillRect(0, 0, width, height);
+		    	  img = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+			      g= img.createGraphics();
 		      }
 		      long now = System.nanoTime();
 		      long updateLength = now - lastLoopTime;
@@ -43,16 +51,34 @@ public class drawLoop {
 		         lastFpsTime = 0;
 		         fps = 0;
 		      }
-		      g.setColor(Color.white);
-		      g.fillRect(0,0,width,height);
-		      g.setColor(Color.black);
+		      g.setColor(new Color(0,0,0,0.005f));
+		      g.fillRect(0, 0, (width), (height));
+		      //g.setComposite(AlphaComposite.Clear);
+		  //    g.fillRect(0, 0, (width), (height));
+		     // g.setComposite(AlphaComposite.SrcOver);
+		      g.setColor(Window.windowBack);
+		      g.fillRect(0, 0, (width), (height));
 		      caller.call(g,delta);
 		      caller.call(g);
+		      g.setColor(Color.black);
 		      Window.panel.update(img);
 		      try{
 		    	  Thread.sleep((lastLoopTime-System.nanoTime() + OPTIMAL_TIME)/1000000);
 		    	 }
 		      catch(Exception e) { }
 		   }
+	}
+	public drawLoop(boolean canDraw) {
+		if(!canDraw) {
+			 width=Window.getWidth();
+	    	  height=Window.getHeight();
+	    	  img = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+			g= img.createGraphics();
+			g.setColor(Window.windowBack);
+		     g.fillRect(0, 0, (width), (height));
+		     caller.call(g);
+		     g.setColor(Color.black);
+		     Window.panel.update(img);
+		}
 	}
 }
