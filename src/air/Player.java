@@ -15,7 +15,7 @@ public class Player extends Object2D {
 	private static Vector2D mousePos=new Vector2D();
 	private static Object2D laser = new Object2D();
 	private Animate2D animation= new Animate2D(300);
-	private Animate2D deathAnimate= new Animate2D(1000);
+	private Animate2D deathAnimate= new Animate2D(200);
 	public Player(Handler handler) {
 		addRect(0, 0, 20, 20).addEmptyPoint(20, 10);
 		updatePos(64, 64);
@@ -52,7 +52,7 @@ public class Player extends Object2D {
 			teleportPos = new Vector2D(pos.getX(), pos.getY());
 			if (getLayer() == indx) handler.animate("teleport", animation);
 			setLayer(indx);
-			if (!nearWall) updatePos(mousePos.getX(), mousePos.getY());
+			if (!nearWall) updatePos(mousePos.getX()-10, mousePos.getY()-20);
 			else {
 				teleportPos = new Vector2D(pos.getX() * 2 - mousePos.getX(), pos.getY() * 2 - mousePos.getY());
 				Camera2D.movePos(pos.getX() - mousePos.getX(), pos.getY() - mousePos.getY());
@@ -73,16 +73,10 @@ public class Player extends Object2D {
 		else g.fillRect(x + 8, y + 8, 4, 4);
 	}
 	public static void death(Graphics g, int ms) {
-		g.setColor(new Color(1f,0,0,0.05f));
+		g.setColor(new Color(1f,0,0,0.1f));
 		int w = Window.getWidth();
 		int h = Window.getHeight();
-		int val=30;
-		for(int y=0;y<=(h/val);y+=2) {
-		for(int x=0;x<=(w/val)+1;x++) {
-		if (ms < x*10)g.fillOval((val*x),(val*y),val,val);
-		if (ms < x*10)g.fillOval(w-(val*x),(val*y)+val,val,val);
-		}
-		}
+		g.fillRect(0, 0, w,h);
 	}
 	public void setNearWall(boolean b) {
 		nearWall=b;

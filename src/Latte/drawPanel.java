@@ -15,6 +15,10 @@ public class drawPanel extends JPanel {
 	 
 	 public void update(BufferedImage img) {
 		this.img=img;
-		repaint();
+		this.paintImmediately(0,0,Window.getWidth(),Window.getHeight());
 	 }
+	 public void updateByRepaint(BufferedImage img) {
+			this.img=img;
+			repaint();
+		 }
 }

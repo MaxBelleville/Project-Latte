@@ -8,7 +8,6 @@ import java.awt.KeyboardFocusManager;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
-import javafx.embed.swing.JFXPanel;
 
 public class Window {
 	private String title="My Project";

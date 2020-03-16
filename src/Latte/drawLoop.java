@@ -1,5 +1,4 @@
 package Latte;
-
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -51,21 +50,14 @@ public class drawLoop {
 		         lastFpsTime = 0;
 		         fps = 0;
 		      }
-		      g.setColor(new Color(0,0,0,0.005f));
-		      g.fillRect(0, 0, (width), (height));
-		      //g.setComposite(AlphaComposite.Clear);
-		  //    g.fillRect(0, 0, (width), (height));
-		     // g.setComposite(AlphaComposite.SrcOver);
-		      g.setColor(Window.windowBack);
-		      g.fillRect(0, 0, (width), (height));
+			  if(delta<1) {
+		      g.setBackground(new Color(255,255,255,0));
+		      g.clearRect(0, 0, width, height);
+		      g.setColor(Color.black);
 		      caller.call(g,delta);
 		      caller.call(g);
-		      g.setColor(Color.black);
 		      Window.panel.update(img);
-		      try{
-		    	  Thread.sleep((lastLoopTime-System.nanoTime() + OPTIMAL_TIME)/1000000);
-		    	 }
-		      catch(Exception e) { }
+			  }
 		   }
 	}
 	public drawLoop(boolean canDraw) {
@@ -78,7 +70,7 @@ public class drawLoop {
 		     g.fillRect(0, 0, (width), (height));
 		     caller.call(g);
 		     g.setColor(Color.black);
-		     Window.panel.update(img);
+		     Window.panel.updateByRepaint(img);
 		}
 	}
 }
