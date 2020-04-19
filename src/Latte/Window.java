@@ -84,6 +84,7 @@ public class Window {
 		jframe.setLocationRelativeTo(null);
 		setupMenu();
 		panel = new drawPanel();
+		panel.setLayout(null);
 		panel.setBackground(windowBack);
 		jframe.setContentPane(panel);
 		jframe.getJMenuBar().setVisible(showMenu);

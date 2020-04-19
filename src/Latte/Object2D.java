@@ -131,22 +131,14 @@ public class Object2D {
 		return this;
 	}
 	private boolean checkQuad(ArrayList<Vector2D> vec) {
-		double xMin = 100000000;
-		double yMin = 100000000;
-		double xMax = -100000000;
-		double yMax = -100000000;
-		double xMin2 = 100000000;
-		double yMin2 = 100000000;
-		double xMax2 = -100000000;
-		double yMax2 = -100000000;
-		xMin = getPoint(0).getX();
-		xMax = getPoint(2).getX();
-		yMin = getPoint(0).getY();
-		yMax = getPoint(2).getY();
-		xMin2 = vec.get(0).getX();
-		xMax2 = vec.get(2).getX();
-		yMin2 = vec.get(0).getY();
-		yMax2 = vec.get(2).getY();
+		double xMin = getPoint(0).getX();
+		double xMax = getPoint(2).getX();
+		double yMin = getPoint(0).getY();
+		double yMax = getPoint(2).getY();
+		double xMin2 = vec.get(0).getX();
+		double xMax2 = vec.get(2).getX();
+		double yMin2 = vec.get(0).getY();
+		double yMax2 = vec.get(2).getY();
 		if (xMin < xMax2 && xMax > xMin2 && yMin < yMax2 && yMax > yMin2)
 			return true;
 		return false;
@@ -157,10 +149,10 @@ public class Object2D {
 		ArrayList<Vector2D> vecs = getNonEmpty(this.vecs);
 		boolean collide = false;
 		for (int a = 0; a < vecs.size(); a++) {
-			Vector2D vn = vecs.get(a);
-			Vector2D vc = vecs.get(0);
+			Vector2D vc = vecs.get(a);
+			Vector2D vn = vecs.get(0);
 			if (a + 1 != vecs.size())
-				vc = vecs.get(a + 1);
+				vn = vecs.get(a + 1);
 			if (((vc.getY() > point.getY()) != (vn.getY() > point.getY()))
 					&& (point.getX() < (vn.getX() - vc.getX()) * (point.getY() - vc.getY()) / (vn.getY() - vc.getY())
 							+ vc.getX())) {
@@ -170,6 +162,30 @@ public class Object2D {
 		if (!collide)
 			return null;
 		return point;
+	}
+	public boolean checkLine(ArrayList<Vector2D> vecs2) {
+		ArrayList<Vector2D> vecs = getNonEmpty(this.vecs);
+		double x1=vecs2.get(0).getX();
+		double y1=vecs2.get(0).getY();
+		double x2=vecs2.get(1).getX();
+		double y2=vecs2.get(1).getY();
+		for (int a = 0; a < vecs.size(); a++) {
+			Vector2D vc = vecs.get(a);
+			Vector2D vn = vecs.get(0);
+			if (a + 1 != vecs.size())
+				vn = vecs.get(a + 1);
+			double x3 = vc.getX();
+			double y3 = vc.getY();
+			double x4 = vn.getX();
+			double y4 = vn.getY();
+			double uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+			double uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+
+			  // if uA and uB are between 0-1, lines are colliding
+			  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1)
+			    return true;
+		}
+		return false;
 	}
 	public static Vector2D collideWith(Group2D group,Vector2D vec) {
 		Vector2D dis;
@@ -196,6 +212,11 @@ public class Object2D {
 		if (vecs.size() == 4 && vecs2.size() == 4 && Math.toDegrees(angle)%90 == 0) {
 			if (checkQuad(vecs2))
 				return obj.getDisplacement();
+		}
+		if (vecs2.size() == 2) {
+			if (checkLine(vecs2))
+				return obj.getDisplacement();
+			return null;
 		}
 		for (int a = 0; a < vecs.size(); a++) {
 			int b = (a + 1) % vecs.size();

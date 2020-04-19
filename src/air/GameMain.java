@@ -20,7 +20,7 @@ public class GameMain {
 	private static Layer layer[] = { new Layer("floor", "wall"), new Layer("floor", "wall") };
 	
 	public GameMain() {
-		handler = new Window().hideMenu().icon("bullet.png").setBackground(Color.black).fullscreen().init();
+		handler.clearElements();
 		player = new Player(handler);
 		handler.onMouseMove("mouseMove");
 		handler.onMouseDown("mouseDown");
@@ -32,20 +32,34 @@ public class GameMain {
 		floor.add(new Object2D().addRect(32, 32, 32, 32),32,32,69,49);
 		wall.add(new Object2D().addRect(0, 0, 32, 32),32,32,70,1);
 		wall.add(new Object2D().addRect(0, 0,0,1, 32, 32),32,32,1,49);
+		wall.add(new Object2D().addRect(0, 0,5,1, 32, 32),32,32,1,9);
 		wall.add(new Object2D().addRect(0, 0,69,1, 32, 32),32,32,1,49);
 		wall.add(new Object2D().addRect(0, 0,0,49, 32, 32),32,32,70,1);
 		layer[1]=layer[0];
 		handler.draw("update");
-		for(int i=2;i<9;i++)
+		for(int i=2;i<16;i++)
 			sound.addToQueue("Music/"+i+".mp3");
 		sound.randomize();
+		sound.setVolume(0.1);
 		sound.play();
 	}
 	
 	public static void main(String[] args) {
-		new GameMain();
+		handler = new Window().hideMenu().icon("bullet.png").setBackground(Color.black).fullscreen().init();
+		startMenu();
 	}
-
+	private static void startMenu() {
+		JButton button = setupButton("Start");
+		JButton settings = setupButton("Settings");
+		JButton exit = setupButton("Exit");
+		handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
+		handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
+		handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
+		button.addActionListener(e -> {
+			new GameMain();
+		});
+		exit.addActionListener(e -> {System.exit(0);});
+	}
 	private static JButton setupButton(String name) {
 		JButton button = new JButton(name);
 		Font font = new Font("Arial Black", Font.BOLD, 18);
@@ -62,13 +76,12 @@ public class GameMain {
 		if (key.equals("Escape")) {
 			handler.canDraw(!handler.isDrawing());
 			if (!handler.isDrawing()) {
-				sound.pause();
 				JButton button = setupButton("Continue");
 				JButton settings = setupButton("Settings");
 				JButton exit = setupButton("Exit");
 				handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
-				handler.addElement(settings, (Window.getWidth() / 2) - 100, 300, 200, 40);
-				handler.addElement(exit, (Window.getWidth() / 2) - 100, 500, 200, 40);
+				handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
+				handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
 				button.addActionListener(e -> {
 					handler.canDraw(!handler.isDrawing());
 					sound.play();
@@ -94,7 +107,7 @@ public class GameMain {
 	public static void mouseDown(int x, int y, int button) {
 		if (handler.isDrawing()) {
 			if (button == 1 && layI == player.getLayer())
-				bullets.add(new Bullet(2500, player.getEmpty(0), new Vector2D(x, y)).setMovement(24, 0));
+				bullets.add(new Bullet(2500, player.getEmpty(0), new Vector2D(x, y)).setMovement(16, 0));
 			if (button == 3) {
 				player.setNearWall(false);
 				handler.onCollide("mouseInside", new Vector2D(x, y), Window.getBorder(50, 50));
@@ -108,17 +121,19 @@ public class GameMain {
 	}
 
 	public static void touchWall(int x, int y) {
+		Vector2D disp=player.getDisplacement();
 		if (Math.abs(x) > 5 || Math.abs(y) > 5)player.teleportStop();
-		player.updatePos((player.getPos().getX() - x), (player.getPos().getY() - y));
+		player.updatePos((player.getPos().getX() - disp.getX()), (player.getPos().getY() - disp.getY()));
 	}
 
 	public static void exit(int x, int y) {
+		Vector2D disp=player.getDisplacement();
 		Vector2D pos = player.getPos();
-		Camera2D.movePos(-x, -y);
+		Camera2D.movePos(-disp.getX(), -disp.getY());
 		player.setLayer(layI);
 		Camera2D.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
-		player.updatePos((pos.getX() - x), (pos.getY() - y));
-		for (int i = 0; i < bullets.size(); i++)bullets.get(i).moveBullet(-x, -y);
+		player.updatePos((pos.getX() - disp.getX()), (pos.getY() - disp.getY()));
+		for (int i = 0; i < bullets.size(); i++)bullets.get(i).moveBullet(-disp.getX(), -disp.getY());
 	}
 
 	public static void canTeleport(int x, int y) {
@@ -130,8 +145,8 @@ public class GameMain {
 		player.canTeleport(layer[layI],layI);
 	}
 	public static void update(Graphics g,double delta) {
-		double speed = 5;
-		if (handler.getKeyPressed("Shift"))speed = 10;
+		double speed = 3*delta;
+		if (handler.getKeyPressed("Shift"))speed = 6*delta;
 		if (handler.getKeyPressed("W"))player.updatePos(player.getPos().getX(), player.getPos().getY() - speed);
 		if (handler.getKeyPressed("A"))player.updatePos(player.getPos().getX() - speed, player.getPos().getY());
 		if (handler.getKeyPressed("D"))player.updatePos(player.getPos().getX() + speed, player.getPos().getY());
@@ -139,9 +154,10 @@ public class GameMain {
 		handler.onCollide("touchWall", player, layer[layI].get("wall"));
 		handler.onCollide("exit", player, Window.getBorder(50, 50));
 		sound.updateQueue();
+		sound.setVolume(0.1);
 		layer[layI].draw(g);
 		end: for (int i = 0; i < bullets.size(); i++) {
-			bullets.get(i).update();
+			bullets.get(i).update(delta);
 			if (layI == player.getLayer())bullets.get(i).draw(g);
 			Vector2D vec = bullets.get(i).getMovement();
 			for (int j = 0; j < bullets.size(); j++) {
@@ -162,6 +178,7 @@ public class GameMain {
 		}
 		player.draw(g,layer[layI].get("wall"),layI);
 		if (!handler.isDrawing()) {
+			sound.pause();
 			g.setColor(new Color(0, 0, 0, 0.5f));
 			g.fillRect(0, 0, Window.getWidth(), Window.getHeight());
 		}

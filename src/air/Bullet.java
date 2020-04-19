@@ -12,7 +12,7 @@ public class Bullet {
 	
 	public Bullet(int endTime, Vector2D startPos,Vector2D lookAt) {
 		animation = new Animate2D(endTime);
-		bullet.addRect(0,0,16,16);
+		bullet.addRect(-8,-8,16,16);
 		bullet.updatePos(startPos.getX(),startPos.getY());
 		bullet.lookAt(lookAt.getX(),lookAt.getY());
 		bullet.setImage("bitmap.png");
@@ -35,10 +35,13 @@ public class Bullet {
 		return animation.hasStopped();
 	}
 	public void update() {
+		update(1);
+	}
+	public void update(double delta) {
 		if(tick!=-1) {
 			tick =animation.manualDraw();
-			bullet.addPosPolar(moveVec.getX());
-			bullet.addPosPolar(moveVec.getY(),bullet.getAngle()+90);
+			bullet.addPosPolar(moveVec.getX()*delta);
+			bullet.addPosPolar(moveVec.getY()*delta,bullet.getAngle()+90);
 		}
 	}
 	public void draw(Graphics g) {

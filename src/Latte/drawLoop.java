@@ -20,7 +20,6 @@ public class drawLoop {
 	public static long endTime=0;
 	protected static void pause(boolean canDraw) {
 		running=canDraw;
-		new drawLoop(canDraw);
 	}
 	protected static boolean isPaused() {
 		return running;
@@ -50,27 +49,17 @@ public class drawLoop {
 		         lastFpsTime = 0;
 		         fps = 0;
 		      }
-			  if(delta<1) {
 		      g.setBackground(new Color(255,255,255,0));
 		      g.clearRect(0, 0, width, height);
 		      g.setColor(Color.black);
 		      caller.call(g,delta);
 		      caller.call(g);
 		      Window.panel.update(img);
-			  }
+		      try{Thread.sleep( (lastLoopTime-System.nanoTime() + OPTIMAL_TIME)/1000000 );}
+		      catch(Exception e) {}
 		   }
-	}
-	public drawLoop(boolean canDraw) {
-		if(!canDraw) {
-			 width=Window.getWidth();
-	    	  height=Window.getHeight();
-	    	  img = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
-			g= img.createGraphics();
-			g.setColor(Window.windowBack);
-		     g.fillRect(0, 0, (width), (height));
-		     caller.call(g);
-		     g.setColor(Color.black);
-		     Window.panel.updateByRepaint(img);
-		}
+		 caller.call(g,0);
+	     caller.call(g);
+		 Window.panel.updateByRepaint(img);
 	}
 }

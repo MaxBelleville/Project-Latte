@@ -3,7 +3,6 @@ package Latte;
 import java.awt.Component;
 import java.awt.Graphics;
 
-import javax.swing.JComponent;
 
 public class Handler {
 	public Handler() {
@@ -103,7 +102,6 @@ public class Handler {
 		Window.panel.remove(component);
 	}
 	public void addElement(Component component, int x, int y, int w, int h) {
-		((JComponent)component).setLayout(null);
 		component.setBounds(x,y,w,h);
 		Window.panel.add(component);
 	}
