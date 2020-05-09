@@ -1,31 +1,31 @@
-package Latte;
+package Latte.Flat;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
 
-public class Group2D {
-	private ArrayList<Object2D> objects = new ArrayList<Object2D>();
-	public void add(Object2D obj) {
-		Object2D tmp = obj.clone();
+public class Group {
+	private ArrayList<Block> objects = new ArrayList<Block>();
+	public void add(Block obj) {
+		Block tmp = obj.clone();
 		objects.add(tmp);
 	}
-	public ArrayList<Object2D> get(){
+	public ArrayList<Block> get(){
 		return objects;
 	}
-	public Object2D get(int i){
+	public Block get(int i){
 		return objects.get(i);
 	}
 	public int getSize() {
 		return objects.size();
 	}
-	public void add(Group2D group) {
-		for (Object2D obj: group.get())
+	public void add(Group group) {
+		for (Block obj: group.get())
 			objects.add(obj);
 	}
-	public void add(Object2D obj,int spacingX, int spacingY, int sizeX, int sizeY){
+	public void add(Block obj,int spacingX, int spacingY, int sizeX, int sizeY){
 		for (int yi =0; yi<sizeY;yi++) {
 			for (int xi =0;xi<sizeX;xi++) {
-			Object2D tmp =obj.clone();
+			Block tmp =obj.clone();
 			tmp.updatePos(spacingX*xi,spacingY*yi);
 			objects.add(tmp);
 			}
@@ -56,13 +56,13 @@ public class Group2D {
 	public void rotate() {
 		for(int i=0; i<objects.size();i++) objects.get(i).rotate();
 	}
-	public Vector2D getEmpty(int indx) {
-		ArrayList<Vector2D> empties = new ArrayList<Vector2D>();
+	public Vector getEmpty(int indx) {
+		ArrayList<Vector> empties = new ArrayList<Vector>();
 		for(int i=0; i<objects.size();i++) {
 			if(objects.get(i).hasEmpties()) {
-				Object2D obj=objects.get(i);
+				Block obj=objects.get(i);
 				for(int v=0; v<obj.getSize();v++) {
-					Vector2D empty = obj.getEmpty(v);
+					Vector empty = obj.getEmpty(v);
 					if(empty!=null) empties.add(empty);
 				}
 			}
@@ -73,10 +73,10 @@ public class Group2D {
 	public void rotate(double angle) {
 		for(int i=0; i<objects.size();i++) objects.get(i).rotate(angle);
 	}
-	public Group2D load(String line) {
+	public Group load(String line) {
 		String[] objsStr=line.split("\\]\\[");
 		for(String obj: objsStr) {
-			Object2D tmp=new Object2D().load(obj);
+			Block tmp=new Block().load(obj);
 			objects.add(tmp);
 		}
 		return this;

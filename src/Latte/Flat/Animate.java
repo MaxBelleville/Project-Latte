@@ -1,19 +1,21 @@
-package Latte;
+package Latte.Flat;
 
 import java.awt.Color;
 import java.awt.Graphics;
 
-public class Animate2D {
-	protected Caller caller;
+import Latte.Caller;
+
+public class Animate {
+	private Caller caller;
 	private int endTicks = 500;
 	private long start = 0;
 	private int tick = 0;
 
-	public Animate2D(int endTicks) {
+	public Animate(int endTicks) {
 		this.endTicks = endTicks;
 	}
 	
-	protected void setCaller(Caller caller) {
+	public void setCaller(Caller caller) {
 		start = System.nanoTime();
 		tick = 0;
 		this.caller = caller;

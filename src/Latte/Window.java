@@ -8,6 +8,9 @@ import java.awt.KeyboardFocusManager;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
+import Latte.Flat.Group;
+import Latte.Flat.Block;
+
 
 public class Window {
 	private String title="My Project";
@@ -88,6 +91,7 @@ public class Window {
 		panel.setBackground(windowBack);
 		jframe.setContentPane(panel);
 		jframe.getJMenuBar().setVisible(showMenu);
+		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		panel.setBorder(new LineBorder(new Color(0,0,0,0.5f),1));
 		jframe.setVisible(true);
 		return new Handler();
@@ -133,15 +137,15 @@ public class Window {
 		displayFps=true;
 		return this;
 	}
-	public static Object2D getWindowBox() {
-		return new Object2D().addRect(0,0,getWidth(),getHeight());
+	public static Block getWindowBox() {
+		return new Block().addRect(0,0,getWidth(),getHeight());
 	}
-	public static Group2D getBorder(int dx, int dy) {
-		Group2D group = new Group2D();
-		group.add(new Object2D().addRect(0,0,dx,getHeight()));
-		group.add(new Object2D().addRect(0,0,getWidth(),dy));
-		group.add(new Object2D().addRect(0,getHeight()-dy,getWidth(),dy));
-		group.add(new Object2D().addRect(getWidth()-dy,0,dx,getHeight()));
+	public static Group getBorder(int dx, int dy) {
+		Group group = new Group();
+		group.add(new Block().addRect(0,0,dx,getHeight()));
+		group.add(new Block().addRect(0,0,getWidth(),dy));
+		group.add(new Block().addRect(0,getHeight()-dy,getWidth(),dy));
+		group.add(new Block().addRect(getWidth()-dy,0,dx,getHeight()));
 		return group;
 	}
 	public Window setBackground(Color color) {

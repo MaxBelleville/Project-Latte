@@ -10,32 +10,33 @@ import javax.swing.JButton;
 import javax.swing.plaf.basic.BasicButtonUI;
 
 import Latte.*;
+import Latte.Flat.*;
 
 public class GameMain {
 	protected static Handler handler;
 	private static Player player;
 	private static int layI = 0;
-	private static Sound2D sound = new Sound2D("Music/1.mp3");
+	private static Sound sound = new Sound("Music/1.mp3");
 	private static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 	private static Layer layer[] = { new Layer("floor", "wall"), new Layer("floor", "wall") };
+	private static Light light = new Light();
+	private static Enemy enemy = new Enemy(false);
+
 	
 	public GameMain() {
+	if(!Server.serverExists("localhost",1100))Server.start(1100);
+	Client.start();
+	Client.connect("localhost",1100);
 		handler.clearElements();
 		player = new Player(handler);
 		handler.onMouseMove("mouseMove");
 		handler.onMouseDown("mouseDown");
 		handler.onKeyDown("keyDown");
-		//IO2D.readPlain("level1-1.txt");
-		//layer[0].load(IO2D.loadNext());
-		Group2D floor=layer[0].get("floor");
-		Group2D wall=layer[0].get("wall");
-		floor.add(new Object2D().addRect(32, 32, 32, 32),32,32,69,49);
-		wall.add(new Object2D().addRect(0, 0, 32, 32),32,32,70,1);
-		wall.add(new Object2D().addRect(0, 0,0,1, 32, 32),32,32,1,49);
-		wall.add(new Object2D().addRect(0, 0,5,1, 32, 32),32,32,1,9);
-		wall.add(new Object2D().addRect(0, 0,69,1, 32, 32),32,32,1,49);
-		wall.add(new Object2D().addRect(0, 0,0,49, 32, 32),32,32,70,1);
+		IO.readPlain("level1-1.amap");
+		layer[0].load(IO.loadNext());
 		layer[1]=layer[0];
+		layer[0].setupNav();
+		light.updateLight(100,300,200,layer[0].get("wall"));
 		handler.draw("update");
 		for(int i=2;i<16;i++)
 			sound.addToQueue("Music/"+i+".mp3");
@@ -45,7 +46,7 @@ public class GameMain {
 	}
 	
 	public static void main(String[] args) {
-		handler = new Window().hideMenu().icon("bullet.png").setBackground(Color.black).fullscreen().init();
+		handler = new Window().hideMenu().fullscreen().icon("bullet.png").setBackground(Color.black).init();
 		startMenu();
 	}
 	private static void startMenu() {
@@ -106,43 +107,50 @@ public class GameMain {
 
 	public static void mouseDown(int x, int y, int button) {
 		if (handler.isDrawing()) {
-			if (button == 1 && layI == player.getLayer())
-				bullets.add(new Bullet(2500, player.getEmpty(0), new Vector2D(x, y)).setMovement(16, 0));
+			if (button == 1 && layI == player.getLayer()) {
+				//bullets.add(new Bullet(2500, player.getEmpty(0),new Vector(x,y)).setMovement(16,0));
+				Client.send("2500 "+player.getEmpty(0)+" "+new Vector(x, y)+" 16 0");
+			}
 			if (button == 3) {
 				player.setNearWall(false);
-				handler.onCollide("mouseInside", new Vector2D(x, y), Window.getBorder(50, 50));
-				handler.onCollide("canTeleport", new Vector2D(x, y), layer[layI].get("floor"));
+				player.setNearEdge(false);
+				handler.onCollide("stopTeleport", new Vector(x, y), layer[layI].get("wall"));
+				handler.onCollide("mouseInside", new Vector(x, y), Window.getBorder(50, 50));
+				handler.onCollide("canTeleport", new Vector(x, y), layer[layI].get("floor"));
 			}
 		}
 	}
-
-	public static void mouseInside(int x, int y) {
+	public static void stopTeleport(int x, int y) {
 		player.setNearWall(true);
+	}
+	public static void mouseInside(int x, int y) {
+		player.setNearEdge(true);
 	}
 
 	public static void touchWall(int x, int y) {
-		Vector2D disp=player.getDisplacement();
+		Vector disp=player.getDisplacement();
 		if (Math.abs(x) > 5 || Math.abs(y) > 5)player.teleportStop();
 		player.updatePos((player.getPos().getX() - disp.getX()), (player.getPos().getY() - disp.getY()));
 	}
 
 	public static void exit(int x, int y) {
-		Vector2D disp=player.getDisplacement();
-		Vector2D pos = player.getPos();
-		Camera2D.movePos(-disp.getX(), -disp.getY());
+		Vector disp=player.getDisplacement();
+		Vector pos = player.getPos();
+		Camera.movePos(-disp.getX(), -disp.getY());
 		player.setLayer(layI);
-		Camera2D.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
+		Camera.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
+		Camera.updateGroups(light);
 		player.updatePos((pos.getX() - disp.getX()), (pos.getY() - disp.getY()));
 		for (int i = 0; i < bullets.size(); i++)bullets.get(i).moveBullet(-disp.getX(), -disp.getY());
 	}
 
 	public static void canTeleport(int x, int y) {
-		if(player.getNearWall()&&player.getCooldown()==0) {
+		if(player.getNearEdge()&&player.getCooldown()==0) {
 			for (int i = 0; i < bullets.size(); i++)
 				bullets.get(i).moveBullet(player.getPos().getX() - player.getMousePos().getX(), 
 						player.getPos().getY() - player.getMousePos().getY());
 		}
-		player.canTeleport(layer[layI],layI);
+		player.canTeleport(layer[layI],layI,light);
 	}
 	public static void update(Graphics g,double delta) {
 		double speed = 3*delta;
@@ -159,7 +167,7 @@ public class GameMain {
 		end: for (int i = 0; i < bullets.size(); i++) {
 			bullets.get(i).update(delta);
 			if (layI == player.getLayer())bullets.get(i).draw(g);
-			Vector2D vec = bullets.get(i).getMovement();
+			Vector vec = bullets.get(i).getMovement();
 			for (int j = 0; j < bullets.size(); j++) {
 				if (bullets.get(i).onCollide(bullets.get(j).getObj()) && i != j) {
 					bullets.get(i).addAngle(45);
@@ -171,16 +179,34 @@ public class GameMain {
 			else if (bullets.get(i).onCollide(player) && bullets.get(i).getTick() >= 100) {
 				bullets.clear();
 				player.reset();
-				Camera2D.setPos(0,0);
-				Camera2D.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
+				Camera.setPos(0,0);
+				Camera.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
+				Camera.updateGroups(light);
 			} else if (bullets.get(i).onCollide(layer[layI].get("wall")))bullets.remove(i);
 			else if (bullets.get(i).hasStopped())bullets.remove(i);
 		}
+		g.setColor(Color.black);
+		enemy.update(layer,player.getPos());
+		enemy.fill(g);
 		player.draw(g,layer[layI].get("wall"),layI);
 		if (!handler.isDrawing()) {
 			sound.pause();
 			g.setColor(new Color(0, 0, 0, 0.5f));
 			g.fillRect(0, 0, Window.getWidth(), Window.getHeight());
+		}
+		//enemy.drawDebugPath(layer,g);
+		proccess();
+	}
+	private static void proccess() {
+		if(Client.hasData()) {
+			new Thread(() -> {
+				Vector vec=player.getPos();
+				while(Client.hasData()){
+					enemy.updateMP(vec.toString());
+					if(Bullet.check())
+						bullets.add(new Bullet());
+				}
+			}).start();
 		}
 	}
 }

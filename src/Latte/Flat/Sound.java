@@ -1,4 +1,4 @@
-package Latte;
+package Latte.Flat;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -10,13 +10,13 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaPlayer.Status;
 import javafx.util.Duration;
 
-public class Sound2D {
+public class Sound {
 	private ArrayList<String>queue = new ArrayList<String>();
 	private MediaPlayer player;
 	private int item=0;
 	private boolean randomize=false;
 	private boolean canLoop =false;
-	public Sound2D(String path) {
+	public Sound(String path) {
 		PlatformImpl.startup(()->{});
 		queue.add(path);
 		Media hit = new Media(new File(path).toURI().toString());

@@ -4,19 +4,21 @@ import java.awt.Color;
 import java.awt.Graphics;
 
 import Latte.*;
+import Latte.Flat.*;
 
-public class Player extends Object2D {
+public class Player extends Block {
 	private static int cooldown=0;
 	private int layer=0;
 	private boolean nearWall=false;
+	private boolean nearEdge=false;
 	private static Handler handler;
-	private static Vector2D teleportPos=new Vector2D();
-	private static Vector2D mousePos=new Vector2D();
-	private static Vector2D mouseLas=new Vector2D();
-	private Animate2D animation= new Animate2D(300);
-	private static Animate2D deathAnimate= new Animate2D(200);
+	private static Vector teleportPos=new Vector();
+	private static Vector mousePos=new Vector();
+	private static Ray ray = new Ray();
+	private Animate animation= new Animate(300);
+	private static Animate deathAnimate= new Animate(200);
 	public Player(Handler handler) {
-		addRect(0, 0, 20, 20).addEmptyPoint(20, 10);
+		addRect(0, 0, 20,20).addEmptyPoint(20, 10);
 		updatePos(64, 64);
 		Player.handler = handler;
 	}
@@ -26,8 +28,11 @@ public class Player extends Object2D {
 	public int getCooldown() {
 		return cooldown;
 	}
-	public Vector2D getMousePos() {
+	public Vector getMousePos() {
 		return mousePos;
+	}
+	public boolean getNearEdge() {
+		return nearEdge;
 	}
 	public boolean getNearWall() {
 		return nearWall;
@@ -43,23 +48,24 @@ public class Player extends Object2D {
 		if (cooldown != 0)
 			handler.onDelay("cooldown", 10);
 	}
-	public void canTeleport(Layer layer,int indx) {
-		Vector2D pos = getPos();
-		if (cooldown == 0) {
-			teleportPos = new Vector2D(pos.getX(), pos.getY());
+	public void canTeleport(Layer layer,int indx,Block light) {
+		Vector pos = getPos();
+		if (cooldown == 0&&!nearWall) {
+			teleportPos = new Vector(pos.getX(), pos.getY());
 			if (getLayer() == indx) handler.animate("teleport", animation);
 			setLayer(indx);
-			if (!nearWall) updatePos(mousePos.getX()-10, mousePos.getY()-20);
+			if (!nearEdge) updatePos(mousePos.getX()-10, mousePos.getY()-10);
 			else {
-				teleportPos = new Vector2D(pos.getX() * 2 - mousePos.getX(), pos.getY() * 2 - mousePos.getY());
-				Camera2D.movePos(pos.getX() - mousePos.getX(), pos.getY() - mousePos.getY());
-				Camera2D.updateGroups(layer.get("floor"), layer.get("wall"));
+				teleportPos = new Vector(pos.getX() * 2 - mousePos.getX(), pos.getY() * 2 - mousePos.getY());
+				Camera.movePos(pos.getX() - mousePos.getX(), pos.getY() - mousePos.getY());
+				Camera.updateGroups(layer.get("floor"), layer.get("wall"));
+				Camera.updateGroups(light);
 			}
 			cooldown = 30;
 			handler.onDelay("cooldown", 10);
-			mouseLas.setPos(0,0);
 		}
 	}
+
 	public static void teleport(Graphics g, int ms) {
 		int x = (int) teleportPos.getX(), y = (int) teleportPos.getY();
 		g.setColor(Color.gray);
@@ -75,18 +81,23 @@ public class Player extends Object2D {
 		int h = Window.getHeight();
 		g.fillRect(0, 0, w,h);
 	}
+	public void setNearEdge(boolean b) {
+		nearEdge=b;
+	}
 	public void setNearWall(boolean b) {
 		nearWall=b;
 	}
-	public void draw(Graphics g,Group2D wall, int layer) {
-		Vector2D vecEmpty = getEmpty(0);
+	public void draw(Graphics g,Group wall, int layer) {
+		Vector vecEmpty = getEmpty(0);
 		animation.draw(g);
 		g.setColor(Color.black);
+		ray.updateTillCollide(vecEmpty,mousePos,wall);
 		if(this.layer==layer)super.fill(g);
 		g.setColor(Color.red);
-		if(this.layer==layer&&mouseLas.getX()!=0) g.drawLine((int)vecEmpty.getX(),(int)vecEmpty.getY(),
-				(int)mouseLas.getX(),(int)mouseLas.getY());
+		if(this.layer==layer)ray.draw(g);
 		deathAnimate.draw(g);
+		Vector vec=getPos();
+		Client.send(vec.toString()+" "+Camera.getPos()+" "+getAngle());
 	}
 	public void setMousePos(int x, int y) {
 		mousePos.setPos(x,y);

@@ -13,6 +13,8 @@ import java.util.HashMap;
 
 import javax.swing.JFrame;
 
+import Latte.Flat.Vector;
+
 public class Listener
 		implements ActionListener, WindowListener, KeyEventDispatcher, MouseListener, MouseMotionListener {
 
@@ -26,7 +28,7 @@ public class Listener
 	protected static Caller mouseDownCaller = new Caller();
 	protected static Caller mouseUpCaller = new Caller();
 	protected static Caller mouseMoveCaller = new Caller();
-	protected static Vector2D mousePos = new Vector2D(0, 0);
+	protected static Vector mousePos = new Vector(0, 0);
 	protected static HashMap<String, Boolean> isKeyDown = new HashMap<String, Boolean>();
 	protected static HashMap<String, Boolean> isMouseDown = new HashMap<String, Boolean>();
 

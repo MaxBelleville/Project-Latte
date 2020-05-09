@@ -1,4 +1,4 @@
-package Latte;
+package Latte.Flat;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -11,18 +11,18 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
-public class Object2D {
-	private ArrayList<Vector2D> vecs = new ArrayList<Vector2D>();
+public class Block {
+	private ArrayList<Vector> vecs = new ArrayList<Vector>();
 	private ArrayList<Boolean> emptyPoint = new ArrayList<Boolean>();
-	private ArrayList<Vector2D> vecsOrg = new ArrayList<Vector2D>();
-	private Vector2D displacement = new Vector2D();
+	private ArrayList<Vector> vecsOrg = new ArrayList<Vector>();
+	private Vector displacement = new Vector();
 	private boolean isSticky=false;
-	private Vector2D pos = new Vector2D(0, 0);
+	private Vector pos = new Vector(0, 0);
 	private BufferedImage img = null;
 	private String path = "";
 	private double angle = 0;
 
-	public Vector2D getPos() {
+	public Vector getPos() {
 		return pos;
 	}
 	public void setSticky(boolean isSticky) {
@@ -31,36 +31,36 @@ public class Object2D {
 	public boolean getSticky() {
 		return isSticky;
 	}
-	public Vector2D getDisplacement() {
+	public Vector getDisplacement() {
 		return displacement;
 	}
 
-	public Vector2D getPoint(int i) {
+	public Vector getPoint(int i) {
 		return vecs.get(i);
 	}
 
-	public Vector2D getOrgPoint(int i) {
+	public Vector getOrgPoint(int i) {
 		return vecsOrg.get(i);
 	}
 
 	public int getSize() {
 		return vecs.size();
 	}
-
+	
 	public void setPoint(int i, double x, double y) {
-		vecs.set(i, new Vector2D(x, y));
-		vecsOrg.set(i, new Vector2D(x, y));
+		vecs.set(i, new Vector(x, y));
+		vecsOrg.set(i, new Vector(x, y));
 	}
 
 	public void addPosPolar(double mag) {
-		Vector2D vec = new Vector2D().convertVector(mag, angle);
+		Vector vec = new Vector().convertVector(mag, Math.toDegrees(angle));
 		double x =(vec.getX() + pos.getX());
 		double y =(vec.getY() + pos.getY());
 		updatePos(x, y);
 	}
 
 	public void addPosPolar(double mag, double angle) {
-		Vector2D vec = new Vector2D().convertVector(mag, angle);
+		Vector vec = new Vector().convertVector(mag, Math.toDegrees(angle));
 		double x = (vec.getX() + pos.getX());
 		double y = (vec.getY() + pos.getY());
 		updatePos(x, y);
@@ -73,29 +73,29 @@ public class Object2D {
 				displacement.getY()+(y - pos.getY()));
 		pos.setPos(x, y);
 		for (int i = 0; i < getSize(); i++) {
-			vecs.set(i,new Vector2D(vecsOrg.get(i).getX() + x, 
+			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x, 
 					vecsOrg.get(i).getY() + y));
 		}
 		if(Math.toDegrees(angle)%90!=0)rotate();
 	}
-
-	public Object2D addOval(double x, double y, double width, double height) {
-		for (int i = 0; i < 360; i++) {
-			double vecX = new Vector2D().convertVector(width, i).getX();
-			double vecY = new Vector2D().convertVector(height, i).getY();
+	
+	public Block addOval(double x, double y, double width, double height) {
+		for (int i = 0; i < 360/8; i++) {
+			double vecX = new Vector().convertVector(width, i*8).getX();
+			double vecY = new Vector().convertVector(height, i*8).getY();
 			addPoint( vecX + x, vecY + y);
 		}
 		return this;
 	}
 
-	public Object2D addRect(double x, double y, double w, double h) {
+	public Block addRect(double x, double y, double w, double h) {
 		addPoint(x, y);
 		addPoint(x + w, y);
 		addPoint(x + w, y + h);
 		addPoint(x, y + h);
 		return this;
 	}
-	public Object2D addRect(double x, double y,double dx, double dy, double w, double h) {
+	public Block addRect(double x, double y,double dx, double dy, double w, double h) {
 		x+=dx*w;
 		y+=dy*h;
 		addPoint(x, y);
@@ -105,9 +105,9 @@ public class Object2D {
 		return this;
 	}
 
-	public Object2D addEmptyPoint(double x, double y) {
-		vecs.add(new Vector2D(vecs.get(0).getX() + x, vecs.get(0).getY() + y));
-		vecsOrg.add(new Vector2D(x,y));
+	public Block addEmptyPoint(double x, double y) {
+		vecs.add(new Vector(vecs.get(0).getX() + x, vecs.get(0).getY() + y));
+		vecsOrg.add(new Vector(x,y));
 		emptyPoint.add(true);
 		return this;
 	}
@@ -120,17 +120,17 @@ public class Object2D {
 		return false;
 	}
 
-	public ArrayList<Vector2D> getPoints() {
+	public ArrayList<Vector> getPoints() {
 		return vecs;
 	}
 
-	public Object2D addPoint(double x, double y) {
-		vecs.add(new Vector2D(x, y));
-		vecsOrg.add(new Vector2D(x, y));
+	public Block addPoint(double x, double y) {
+		vecs.add(new Vector(x, y));
+		vecsOrg.add(new Vector(x, y));
 		emptyPoint.add(false);
 		return this;
 	}
-	private boolean checkQuad(ArrayList<Vector2D> vec) {
+	private boolean checkQuad(ArrayList<Vector> vec) {
 		double xMin = getPoint(0).getX();
 		double xMax = getPoint(2).getX();
 		double yMin = getPoint(0).getY();
@@ -144,13 +144,13 @@ public class Object2D {
 		return false;
 	}
 
-	public Vector2D collideWith(Vector2D point) {
+	public Vector collideWith(Vector point) {
 		// May not actually be sat.
-		ArrayList<Vector2D> vecs = getNonEmpty(this.vecs);
+		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
 		boolean collide = false;
 		for (int a = 0; a < vecs.size(); a++) {
-			Vector2D vc = vecs.get(a);
-			Vector2D vn = vecs.get(0);
+			Vector vc = vecs.get(a);
+			Vector vn = vecs.get(0);
 			if (a + 1 != vecs.size())
 				vn = vecs.get(a + 1);
 			if (((vc.getY() > point.getY()) != (vn.getY() > point.getY()))
@@ -163,15 +163,15 @@ public class Object2D {
 			return null;
 		return point;
 	}
-	public boolean checkLine(ArrayList<Vector2D> vecs2) {
-		ArrayList<Vector2D> vecs = getNonEmpty(this.vecs);
+	public boolean checkLine(ArrayList<Vector> vecs2) {
+		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
 		double x1=vecs2.get(0).getX();
 		double y1=vecs2.get(0).getY();
 		double x2=vecs2.get(1).getX();
 		double y2=vecs2.get(1).getY();
 		for (int a = 0; a < vecs.size(); a++) {
-			Vector2D vc = vecs.get(a);
-			Vector2D vn = vecs.get(0);
+			Vector vc = vecs.get(a);
+			Vector vn = vecs.get(0);
 			if (a + 1 != vecs.size())
 				vn = vecs.get(a + 1);
 			double x3 = vc.getX();
@@ -187,18 +187,18 @@ public class Object2D {
 		}
 		return false;
 	}
-	public static Vector2D collideWith(Group2D group,Vector2D vec) {
-		Vector2D dis;
-		for(Object2D obj: group.get()) {
+	public static Vector collideWith(Group group,Vector vec) {
+		Vector dis;
+		for(Block obj: group.get()) {
 			dis =obj.collideWith(vec);
 			if (dis != null)
 				return dis;
 		}
 		return null;
 	}
-	public Vector2D collideWith(Group2D group) {
-		Vector2D vec;
-		for(Object2D obj: group.get()) {
+	public Vector collideWith(Group group) {
+		Vector vec;
+		for(Block obj: group.get()) {
 			vec =obj.collideWith(this);
 			if (vec != null)
 				return vec;
@@ -206,9 +206,9 @@ public class Object2D {
 		return null;
 	}
 
-	public Vector2D collideWith(Object2D obj) {
-		ArrayList<Vector2D> vecs = getNonEmpty(this.vecs);
-		ArrayList<Vector2D> vecs2 = obj.getNonEmpty(obj.getPoints());
+	public Vector collideWith(Block obj) {
+		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
+		ArrayList<Vector> vecs2 = obj.getNonEmpty(obj.getPoints());
 		if (vecs.size() == 4 && vecs2.size() == 4 && Math.toDegrees(angle)%90 == 0) {
 			if (checkQuad(vecs2))
 				return obj.getDisplacement();
@@ -220,7 +220,7 @@ public class Object2D {
 		}
 		for (int a = 0; a < vecs.size(); a++) {
 			int b = (a + 1) % vecs.size();
-			Vector2D axis = new Vector2D(-(getPoint(b).getY() - getPoint(a).getY()),
+			Vector axis = new Vector(-(getPoint(b).getY() - getPoint(a).getY()),
 					getPoint(b).getX() - getPoint(a).getX());
 			double min = 100000000;
 			double max = -100000000;
@@ -242,7 +242,7 @@ public class Object2D {
 		return obj.getDisplacement();
 	}
 
-	private Polygon getPoly() {
+	public Polygon getPoly() {
 		Polygon poly = new Polygon();
 		for (int i = 0; i < vecs.size(); i++) {
 			if (!emptyPoint.get(i))
@@ -260,8 +260,8 @@ public class Object2D {
 		return poly;
 	}
 
-	public Vector2D getEmpty(int indx) {
-		ArrayList<Vector2D> empties = new ArrayList<Vector2D>();
+	public Vector getEmpty(int indx) {
+		ArrayList<Vector> empties = new ArrayList<Vector>();
 		for (int i = 0; i < getSize(); i++) {
 			if (emptyPoint.get(i))
 				empties.add(vecs.get(i));
@@ -283,7 +283,7 @@ public class Object2D {
 		g.drawPolygon(poly);
 	}
 
-	public Object2D setImage(String path) {
+	public Block setImage(String path) {
 		this.path = path;
 		try {
 			img = ImageIO.read(new File(path));
@@ -324,7 +324,7 @@ public class Object2D {
 	public void resetDisplacement() {
 		displacement.setPos(0,0);
 	}
-	public Object2D setAngle(double angle) {
+	public Block setAngle(double angle) {
 		this.angle = Math.toRadians(angle % 360);
 		return this;
 	}
@@ -337,24 +337,34 @@ public class Object2D {
 	public void lookAt(double x, double y) {
 		double distX = pos.getX() - x;
 		double distY = pos.getY() - y;
-		angle = new Vector2D(-distX, distY).getAngle();
+		angle = Math.toRadians(new Vector(-distX, distY).getAngle());
+		rotate();
+	}
+	public void lookAtOffset(double x, double y, double offX, double offY) {
+		double distX = (pos.getX()+offX) - x;
+		double distY = (pos.getY()+offY) - y;
+		angle = Math.toRadians(new Vector(-distX, distY).getAngle());
 		rotate();
 	}
 
+
 	public void rotate() {
-		Vector2D vec = getCenter();
+		setAndRotate(pos.getX(),pos.getY());
+	}
+	public void setAndRotate(double x2, double y2) {
+		Vector vec = getCenter();
 		for (int i = 0; i < getSize(); i++) {
 			double x=vecsOrg.get(i).getX()-vec.getX();
 			double y=vecsOrg.get(i).getY()-vec.getY();
 			double xRot = (x * Math.cos(angle) - y * Math.sin(angle));
 			double yRot = -(x * Math.sin(angle) + y * Math.cos(angle));
-			vecs.set(i, new Vector2D((vec.getX() + xRot)+pos.getX(),
-					(vec.getY() + yRot)+pos.getY()));
+			vecs.set(i, new Vector((vec.getX() + xRot)+x2,
+					(vec.getY() + yRot)+y2));
 		}
 	}
 
-	private ArrayList<Vector2D> getNonEmpty(ArrayList<Vector2D> vecs) {
-		ArrayList<Vector2D> notEmpties = new ArrayList<Vector2D>();
+	private ArrayList<Vector> getNonEmpty(ArrayList<Vector> vecs) {
+		ArrayList<Vector> notEmpties = new ArrayList<Vector>();
 		for (int i = 0; i < getSize(); i++) {
 			if (!emptyPoint.get(i))
 				notEmpties.add(vecs.get(i));
@@ -362,27 +372,26 @@ public class Object2D {
 		return notEmpties;
 	}
 
-	private Vector2D getCenter() {
-		ArrayList<Vector2D> vecs = getNonEmpty(vecsOrg);
+	private Vector getCenter() {
+		ArrayList<Vector> vecs = getNonEmpty(vecsOrg);
 		double x = 0;
 		double y = 0;
-		for (Vector2D vec: vecs) {
+		for (Vector vec: vecs) {
 			x += vec.getX();
 			y += vec.getY();
 		}
 		x /= vecs.size();
 		y /= vecs.size();
-		return new Vector2D(x, y);
+		return new Vector(x, y);
 	}
 	
-	public Object2D clone() {
-		Object2D tmp = new Object2D();
+	public Block clone() {
+		Block tmp = new Block();
 		for (int i = 0; i < getSize(); i++) {
 			if (!emptyPoint.get(i))
 				tmp.addPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
 			else
 				tmp.addEmptyPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
-			//tmp.updatePos(getPoint(i).getX(), getPoint(i).getY());
 			tmp.setAngle(angle);
 			tmp.setImage(path);
 		}
@@ -390,7 +399,7 @@ public class Object2D {
 	}
 	public void setPoints(double x, double y) {
 		for (int i = 0; i < getSize(); i++) {
-			vecs.set(i,new Vector2D(vecsOrg.get(i).getX() + x, 
+			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x, 
 					vecsOrg.get(i).getY() + y));
 		}
 	}
@@ -402,7 +411,7 @@ public class Object2D {
 			tmp+=", "+df.format(vecsOrg.get(i).getX())+", "+df.format(vecsOrg.get(i).getY())+", "+(emptyPoint.get(i)?1:0);
 		return tmp;
 	}
-	public Object2D load(String line) {
+	public Block load(String line) {
 		String msg[]=line.split(", ");
 		double x=0,y=0;
 		if(!msg[0].isEmpty())isSticky=Boolean.parseBoolean(msg[0]);

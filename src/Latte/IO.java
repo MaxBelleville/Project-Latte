@@ -8,9 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 
-public class IO2D<T> {
+public class IO<T> {
 	private static String plainText="";
-	public IO2D<T> save(T var) {
+	public IO<T> save(T var) {
 		if(!plainText.isEmpty())plainText+="\n";
 		plainText+=var;	
 		return this;
