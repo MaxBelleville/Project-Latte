@@ -2,6 +2,9 @@ package Latte;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import Latte.Frothy.Camera3;
 
 public class drawLoop {
 	private long lastLoopTime = System.nanoTime();
@@ -13,9 +16,10 @@ public class drawLoop {
 	private static boolean running=true;
 	private int width=0;
 	private int height=0;
+	private static String title="";
 	private BufferedImage img=null;
-	private static Caller caller;
-	public static Caller animator;
+	private static BiConsumer<Graphics2D,Double> funcWithDelta;
+	private static Consumer<Graphics2D> func;
 	public static long animationTime=0;
 	public static long endTime=0;
 	protected static void pause(boolean canDraw) {
@@ -24,11 +28,14 @@ public class drawLoop {
 	protected static boolean isPaused() {
 		return running;
 	}
-	protected static void setCaller(Caller caller) {
-		drawLoop.caller = caller;
+	protected static void setCaller(BiConsumer<Graphics2D,Double> func) {
+		drawLoop.funcWithDelta=func;
+	}
+	protected static void setCaller(Consumer<Graphics2D> func) {
+		drawLoop.func=func;
 	}
 	protected drawLoop() {
-		 String title= Window.titleLabel.getText();
+		if(title.isEmpty())title= Window.titleLabel.getText();
 		 while (running)
 		   {
 		      if(width!=Window.getWidth()||height!=Window.getHeight()) {
@@ -49,17 +56,18 @@ public class drawLoop {
 		         lastFpsTime = 0;
 		         fps = 0;
 		      }
-		      g.setBackground(new Color(255,255,255,0));
-		      g.clearRect(0, 0, width, height);
+		      g.setColor(Window.jframe.getBackground());
+		      g.clearRect(0,0,Window.getWidth(),Window.getHeight());
 		      g.setColor(Color.black);
-		      caller.call(g,delta);
-		      caller.call(g);
+		      Camera3.clear();
+		      if(funcWithDelta!=null)funcWithDelta.accept(g,delta);
+		      if(func!=null)func.accept(g);
 		      Window.panel.update(img);
 		      try{Thread.sleep( (lastLoopTime-System.nanoTime() + OPTIMAL_TIME)/1000000 );}
 		      catch(Exception e) {}
 		   }
-		 caller.call(g,0);
-	     caller.call(g);
-		 Window.panel.updateByRepaint(img);
+		   if(funcWithDelta!=null)funcWithDelta.accept(g,0.0);
+		   if(func!=null)func.accept(g);
+		   Window.panel.update(img);
 	}
 }

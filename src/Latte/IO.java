@@ -6,46 +6,43 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
-
-public class IO<T> {
-	private static String plainText="";
-	public IO<T> save(T var) {
-		if(!plainText.isEmpty())plainText+="\n";
-		plainText+=var;	
+public class IO {
+	private ArrayList<String> text=new ArrayList<String>();
+	public IO save(String var) {
+		text.add(var);
 		return this;
 	}
-	public static void reset() {
-		plainText="";
+	public void reset() {
+		text.clear();
 	}
-	public static void writePlain(String path) {
+	public void writePlain(String path) {
+		System.out.println(text);
 		 File file = new File(path);
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-			bw.write(plainText);
+			for(int i=0;i<text.size();i++)bw.write(text.get(i)+"\n");
 			bw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	public static boolean hasNext() {
-		return !plainText.isEmpty();
+	public boolean hasNext() {
+		return !text.isEmpty();
 	}
-	public static String loadNext() {
-		String[] tmp=plainText.split("\n");
-		plainText="";
-		for(int i=1;i<tmp.length;i++) {
-			plainText+=tmp[i]+"\n";
-		}
-		return tmp[0];
+	public String loadNext() {
+		String tmp = text.get(0);
+		text.remove(0);
+		return tmp;
 	}
-	public static void readPlain(String path) {
+	public void readPlain(String path) {
 		 File file = new File(path);
 		 String line="";
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			 while ((line = br.readLine()) != null) {
-			       plainText+=line+"\n";
+			       text.add(line);
 			    }
 			br.close();
 		} catch (IOException e) {

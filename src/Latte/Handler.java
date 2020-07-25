@@ -1,10 +1,16 @@
 package Latte;
 
 import java.awt.Component;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import javax.swing.JLayeredPane;
 
 import Latte.Flat.Animate;
 import Latte.Flat.Group;
+import Latte.Flat.TriConsumer;
 import Latte.Flat.Block;
 import Latte.Flat.Vector;
 
@@ -12,197 +18,151 @@ import Latte.Flat.Vector;
 public class Handler {
 	public Handler() {
 	}
-
-	public void draw(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller call = new Caller();
-		call.getMethod(classStr, methodStr, Graphics.class, double.class);
-		if (call.isEmpty())
-			call.getMethod(classStr, methodStr, Graphics.class);
-		drawLoop.setCaller(call);
-		Thread drawThread = new DrawThread();
-		drawThread.start();
+	public static void draw(Consumer<Graphics2D> func) {
+		drawLoop.setCaller(func);
+		Thread t = new Thread(() -> { new drawLoop(); });
+		t.start();
 	}
-	public boolean isDrawing() {
+	public static void draw(BiConsumer<Graphics2D,Double> func) {
+		drawLoop.setCaller(func);
+		Thread t = new Thread(() -> { new drawLoop(); });
+		t.start();
+	}
+	public static boolean isDrawing() {
 		return drawLoop.isPaused();
 	}
-	public void canDraw(boolean canDraw) {
+	public static void canDraw(boolean canDraw) {
 		drawLoop.pause(canDraw);
-		Thread drawThread = new DrawThread();
-		if(canDraw)drawThread.start();
+		Thread t = new Thread(() -> { new drawLoop(); });
+		if(canDraw)t.start();
 	}
-	public void animate(String methodStr, Animate animation) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller call = new Caller();
-		call.getMethod(classStr, methodStr, Graphics.class, int.class);
-		animation.setCaller(call);
+	public static void animate(BiConsumer<Graphics2D,Integer> func, Animate animation) {
+		animation.setCaller(func);
 	}
 
-	public void onMouseMove(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.mouseMoveCaller.getMethod(classStr, methodStr, int.class, int.class);
+	public static void onMouseMove(BiConsumer<Integer,Integer> func) {
+		Listener.mouseMoveFunc = func;
+	}
+	public static void onLoopTillComplete(Runnable loop,Predicate<Boolean> condition) {
+		Thread t = new Thread(() -> { 
+				while(condition.test(true)) loop.run();
+		});
+		t.start();
+	}
+	public static void onLoopTillComplete(Runnable complete,Runnable loop,Predicate<Boolean> condition) {
+		Thread t = new Thread(() -> { 
+				while(condition.test(true)) loop.run();
+				complete.run();
+		});
+		t.start();
 	}
 
-	public void onDelay(String methodStr, int delay) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller delayCaller = new Caller();
-		delayCaller.getMethod(classStr, methodStr);
-		Thread delayThread = new DelayThread(delayCaller, delay);
-		delayThread.start();
+	public static void onLoopTillComplete(Predicate<Boolean> condition) {
+		Thread t = new Thread(() -> { while(condition.test(true)); });
+		t.start();
+	}
+	
+	public static void onDelay(Runnable func, int delay) {
+		Thread t = new Thread(() -> { 
+			try {
+				Thread.sleep(delay);
+				func.run();
+			} catch (InterruptedException e) {}
+		});
+		t.start();
 	}
 
-	public void onMouseDown(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.mouseDownCaller.getMethod(classStr, methodStr, int.class, int.class, int.class);
+	public static void onMouseDown(TriConsumer<Integer, Integer, Integer> func) {
+		Listener.mouseDownFunc = func;
 	}
 
-	public void onMouseUp(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.mouseUpCaller.getMethod(classStr, methodStr, int.class, int.class, int.class);
+	public static void onMouseUp(TriConsumer<Integer, Integer, Integer> func) {
+		Listener.mouseUpFunc =func;
 	}
 
-	public void onKeyDown(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.keyDownCaller.getMethod(classStr, methodStr, String.class);
+	public static void onKeyDown(Consumer<String> func) {
+		Listener.keyDownFunc =func;
 	}
 
-	public void onKeyUp(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.keyUpCaller.getMethod(classStr, methodStr, String.class);
+	public static void onKeyUp(Consumer<String> func) {
+		Listener.keyUpFunc =func;
 	}
 
-	public void onClose(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.closeCaller.getMethod(classStr, methodStr, String.class);
+	public static void onClose(Runnable func) {
+		Listener.closeFunc =func;
 	}
 
-	public void onMinimize(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.minCaller.getMethod(classStr, methodStr, String.class);
+	public static void onMinimize(Runnable func) {
+		Listener.minFunc =func;
 	}
 
-	public void onMaximize(String methodStr) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Listener.maxCaller.getMethod(classStr, methodStr, String.class);
+	public static void onMaximize(Runnable func) {
+		Listener.maxFunc =func;
 	}
-
-	public void onCollide(String methodStr, Vector colliderPoint, Block collidee) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr, int.class, int.class);
-		Vector vec = collidee.collideWith(colliderPoint);
-		if (vec != null)
-			collideCaller.call((int) vec.getX(), (int) vec.getY());
-	}
-	public Component getElement(String name) {
+	public static Component getElement(String name) {
 		for(Component c: Window.panel.getComponents()) {
 			if(c.getName().equals(name)) return c;
 		}
 		return null;
 	}
-	public void clearElements() {
+	public static void clearElements() {
 		Window.panel.removeAll();
 	}
-	public void removeElement(Component component) {
+	public static void removeElement(Component component) {
 		Window.panel.remove(component);
 	}
-	public void addElement(Component component, int x, int y, int w, int h) {
+	public static void addElement(Component component, int x, int y, int w, int h) {
 		component.setBounds(x,y,w,h);
-		Window.panel.add(component);
-	}
-		
-	public void onCollide(String methodStr, Block collider, Block collidee) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr, int.class, int.class);
-		Vector vec = collidee.collideWith(collider);
-		if (vec != null)
-			collideCaller.call((int) vec.getX(), (int) vec.getY());
+		Window.panel.add(component,JLayeredPane.PALETTE_LAYER);
 	}
 
-	public void onCollide(String methodStr, Vector colliderPoint, Group group) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr, int.class, int.class);
-		Vector vec =Block.collideWith(group,colliderPoint);
-		if (vec != null)
-			collideCaller.call((int) vec.getX(), (int) vec.getY());
-	}
-
-	public void onCollide(String methodStr, Block collider, Group group) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr, int.class, int.class);
-		Vector vec=collider.collideWith(group);
-		if (vec != null)	
-			collideCaller.call((int) vec.getX(), (int) vec.getY());
-	}
-
-	public void onAvoid(String methodStr, Block collider, Block collidee) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr);
-		Vector vec = collidee.collideWith(collider);
-		if (vec == null)
-			collideCaller.call();
-	}
-
-	public void onAvoid(String methodStr, Vector colliderPoint, Block collidee) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr);
-		Vector vec = collidee.collideWith(colliderPoint);
-		if (vec == null)
-			collideCaller.call();
-	}
-
-	public void onAvoid(String methodStr, Vector colliderPoint, Group group) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr);
-		Vector vec =Block.collideWith(group,colliderPoint);
-		if (vec == null)
-			collideCaller.call();
-	}
-
-	public void onAvoid(String methodStr, Block collider, Group group) {
-		String classStr = new Exception().getStackTrace()[1].getClassName();
-		Caller collideCaller = new Caller();
-		collideCaller.getMethod(classStr, methodStr);
-		Vector vec =collider.collideWith(group);
-		if (vec == null)
-			collideCaller.call();
-	}
-
-	public boolean getKeyPressed(String key) {
-		String keys[] = key.split(",");
-		for (String k : keys) {
-			if (Listener.isKeyDown.containsKey(k))
-				return Listener.isKeyDown.get(k);
+	public static boolean getKeyPressed(String keys) {
+		String keyArr[] = keys.split(",");
+		for (String key : keyArr) {
+			if (Listener.isKeyDown.containsKey(key))
+				if(Listener.isKeyDown.get(key)) return true;
 		}
 		return false;
 	}
-}
-
-class DelayThread extends Thread {
-	private int delay = 0;
-	private Caller caller;
-
-	public DelayThread(Caller caller, int delay) {
-		this.delay = delay;
-		this.caller = caller;
-	}
-
-	public void run() {
-		try {
-			Thread.sleep(delay);
-			caller.call();
-		} catch (InterruptedException e) {
+	public static boolean getMousePressed(String buttons) {
+		String buttonArr[] = buttons.split(",");
+		for (String button : buttonArr) {
+			int val=Integer.parseInt(button);
+			if (Listener.isButtonDown.containsKey(val))
+				if(Listener.isButtonDown.get(val)) return true;
 		}
+		return false;
 	}
-}
-class DrawThread extends Thread {
-	public void run() {
-		new drawLoop();
+	public static void onCollide(Consumer<Block> func, Block collider, Block collidee) {
+		Block block=collider.collideWith(collidee);
+		if (block != null) func.accept(block);
+	}
+	public static void onCollide(Consumer<Block> func, Block collider, Group group) {
+		Block block=collider.collideWith(group);
+		if (block != null) func.accept(block);
+	}
+	public static void onCollide(Consumer<Block> func, Vector colliderPoint, Block collidee) {
+		Block block= collidee.collideWith(colliderPoint);
+		if (block != null) func.accept(block);
+	}
+	public static void onCollide(Consumer<Block> func, Vector colliderPoint, Group group) {
+		Block block =Block.collideWith(group,colliderPoint);
+		if (block != null) func.accept(block);
+	}
+	public static void onAvoid(Runnable func, Block collider, Block collidee) {
+		Block block=collider.collideWith(collidee);
+		if (block == null) func.run();
+	}
+	public static void onAvoid(Runnable func, Block collider, Group group) {
+		Block block=collider.collideWith(group);
+		if (block == null) func.run();
+	}
+	public static void onAvoid(Runnable func, Vector colliderPoint, Block collidee) {
+		Block block = collidee.collideWith(colliderPoint);
+		if (block == null) func.run();
+	}
+	public static void onAvoid(Runnable func, Vector colliderPoint, Group group) {
+		Block block=Block.collideWith(group,colliderPoint);
+		if (block == null) func.run();
 	}
 }

@@ -2,6 +2,7 @@ package air;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.Random;
 
 import Latte.*;
 import Latte.Flat.*;
@@ -11,16 +12,15 @@ public class Player extends Block {
 	private int layer=0;
 	private boolean nearWall=false;
 	private boolean nearEdge=false;
-	private static Handler handler;
 	private static Vector teleportPos=new Vector();
-	private static Vector mousePos=new Vector();
-	private static Ray ray = new Ray();
+	private Vector mousePos=new Vector();
+	private Ray ray = new Ray();
+	private Vector spawn=new Vector(64,64);
 	private Animate animation= new Animate(300);
-	private static Animate deathAnimate= new Animate(200);
-	public Player(Handler handler) {
-		addRect(0, 0, 20,20).addEmptyPoint(20, 10);
-		updatePos(64, 64);
-		Player.handler = handler;
+	private Animate deathAnimate= new Animate(200);
+	public Player() {
+		addRect(0, 0, 16,16).addEmptyPoint(16, 8);
+		setSticky(true);
 	}
 	public int getLayer() {
 		return layer;
@@ -46,37 +46,41 @@ public class Player extends Block {
 	public static void cooldown() {
 		cooldown--;
 		if (cooldown != 0)
-			handler.onDelay("cooldown", 10);
+			Handler.onDelay(Player::cooldown, 10);
 	}
-	public void canTeleport(Layer layer,int indx,Block light) {
+	public void canTeleport(int indx) {
 		Vector pos = getPos();
 		if (cooldown == 0&&!nearWall) {
 			teleportPos = new Vector(pos.getX(), pos.getY());
-			if (getLayer() == indx) handler.animate("teleport", animation);
+			if (getLayer() == indx) Handler.animate(Player::teleport, animation);
 			setLayer(indx);
-			if (!nearEdge) updatePos(mousePos.getX()-10, mousePos.getY()-10);
+			if (!nearEdge) updatePos(mousePos.getX()-8, mousePos.getY()-8);
 			else {
 				teleportPos = new Vector(pos.getX() * 2 - mousePos.getX(), pos.getY() * 2 - mousePos.getY());
-				Camera.movePos(pos.getX() - mousePos.getX(), pos.getY() - mousePos.getY());
-				Camera.updateGroups(layer.get("floor"), layer.get("wall"));
-				Camera.updateGroups(light);
+				Camera.movePos((pos.getX()-mousePos.getX())/2,(pos.getY()-mousePos.getY())/2);
 			}
 			cooldown = 30;
-			handler.onDelay("cooldown", 10);
+			Handler.onDelay(Player::cooldown, 10);
 		}
 	}
-
+	public void setSpawn(Vector pos) {
+		updatePos(pos.getX(),pos.getY());
+		spawn=pos;
+		
+	}
 	public static void teleport(Graphics g, int ms) {
-		int x = (int) teleportPos.getX(), y = (int) teleportPos.getY();
-		g.setColor(Color.gray);
-		if (ms < 60)g.fillOval(x, y, 20, 20);
-		else if (ms < 120)g.fillOval(x + 2, y + 2, 16, 16);
-		else if (ms < 180)g.fillOval(x + 4, y + 4, 12, 12);
-		else if (ms < 240)g.fillOval(x + 6, y + 6, 8, 8);
+		Random rand = new Random();
+		int x = (int) teleportPos.getX()+rand.nextInt(7)-3, y = (int) teleportPos.getY()+rand.nextInt(7)-3;
+		int c=255-(ms/3);
+		g.setColor(new Color((ms/3),(ms/3),(ms/3),c));
+		if (ms < 60) g.fillRect(x, y, 20, 20);
+		else if (ms < 120) g.fillOval(x + 2, y + 2, 16, 16);
+		else if (ms < 180) g.fillOval(x + 4, y + 4, 12, 12);
+		else if (ms < 240) g.fillOval(x + 6, y + 6, 8, 8);
 		else g.fillRect(x + 8, y + 8, 4, 4);
 	}
 	public static void death(Graphics g, int ms) {
-		g.setColor(new Color(1f,0,0,0.2f));
+		g.setColor(new Color(1f,0,0,0.1f));
 		int w = Window.getWidth();
 		int h = Window.getHeight();
 		g.fillRect(0, 0, w,h);
@@ -91,7 +95,8 @@ public class Player extends Block {
 		Vector vecEmpty = getEmpty(0);
 		animation.draw(g);
 		g.setColor(Color.black);
-		ray.updateTillCollide(vecEmpty,mousePos,wall);
+		if(wall!=null)
+		ray.updateTillCollide(vecEmpty,mousePos,5,wall);
 		if(this.layer==layer)super.fill(g);
 		g.setColor(Color.red);
 		if(this.layer==layer)ray.draw(g);
@@ -103,7 +108,7 @@ public class Player extends Block {
 		mousePos.setPos(x,y);
 	}
 	public void reset() {
-		updatePos(64, 64);
-		handler.animate("death", deathAnimate);
+		updatePos(spawn.getX(),spawn.getY());
+		Handler.animate(Player::death, deathAnimate);
 	}
 }

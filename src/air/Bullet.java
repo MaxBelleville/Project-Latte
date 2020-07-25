@@ -12,6 +12,7 @@ public class Bullet extends Block {
 	private int tick=0;
 	
 	public Bullet() {
+		setSticky(true);
 		String[] split =Client.getRecieved().split(" ");
 		Client.loadNext();
 			animation = new Animate(Integer.parseInt(split[0]));
@@ -22,6 +23,7 @@ public class Bullet extends Block {
 			double y2 = Double.parseDouble(split[4]);
 			double x3 = Double.parseDouble(split[5]);
 			double y3 = Double.parseDouble(split[6]);
+			setSticky(true);
 			updatePos(x,y);
 			lookAt(x2,y2);
 			setImage("bitmap.png");
@@ -32,14 +34,15 @@ public class Bullet extends Block {
 	public Bullet(int endTime, Vector startPos,Vector lookAt) {
 		animation = new Animate(endTime);
 		addRect(-8,-8,16,16);
+		setSticky(true);
 		updatePos(startPos.getX(),startPos.getY());
 		lookAt(lookAt.getX(),lookAt.getY());
 		setImage("bitmap.png");
 		animation.reset();
 		
 	}
-	public void addAngle(double angle) {
-		setAngle(Math.toDegrees(getAngle())+angle);
+	public void addAngle(int angle) {
+		setAngle(getAngle()+angle);
 	}
 	public Block getObj() {
 		return this;
@@ -66,7 +69,7 @@ public class Bullet extends Block {
 		if(tick!=-1) {
 			tick =animation.manualDraw();
 			addPosPolar(moveVec.getX()*delta);
-			addPosPolar(moveVec.getY()*delta,getAngle()+90);
+			addPosPolar(moveVec.getY()*delta);
 		}
 	}
 	public void draw(Graphics g) {

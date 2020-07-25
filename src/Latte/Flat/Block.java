@@ -1,5 +1,6 @@
 package Latte.Flat;
 
+import Latte.Window;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
@@ -16,11 +17,13 @@ public class Block {
 	private ArrayList<Boolean> emptyPoint = new ArrayList<Boolean>();
 	private ArrayList<Vector> vecsOrg = new ArrayList<Vector>();
 	private Vector displacement = new Vector();
+	private Vector offset = new Vector();
 	private boolean isSticky=false;
+	private Color blockColor;
 	private Vector pos = new Vector(0, 0);
 	private BufferedImage img = null;
 	private String path = "";
-	private double angle = 0;
+	private int angle = 0;
 
 	public Vector getPos() {
 		return pos;
@@ -53,30 +56,30 @@ public class Block {
 	}
 
 	public void addPosPolar(double mag) {
-		Vector vec = new Vector().convertVector(mag, Math.toDegrees(angle));
+		Vector vec = new Vector().convertVector(mag, angle);
 		double x =(vec.getX() + pos.getX());
 		double y =(vec.getY() + pos.getY());
 		updatePos(x, y);
 	}
 
 	public void addPosPolar(double mag, double angle) {
-		Vector vec = new Vector().convertVector(mag, Math.toDegrees(angle));
+		Vector vec = new Vector().convertVector(mag, angle%360);
 		double x = (vec.getX() + pos.getX());
 		double y = (vec.getY() + pos.getY());
 		updatePos(x, y);
 	}
 	public int getAngle() {
-		return (int) Math.toDegrees(angle);
+		return angle;
 	}
 	public void updatePos(double x, double y) {
 		displacement.setPos(displacement.getX()+(x - pos.getX()), 
 				displacement.getY()+(y - pos.getY()));
 		pos.setPos(x, y);
 		for (int i = 0; i < getSize(); i++) {
-			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x, 
-					vecsOrg.get(i).getY() + y));
+			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x+offset.getX(), 
+					vecsOrg.get(i).getY() + y+offset.getY()));
 		}
-		if(Math.toDegrees(angle)%90!=0)rotate();
+		if(angle%90!=0)rotate();
 	}
 	
 	public Block addOval(double x, double y, double width, double height) {
@@ -143,8 +146,7 @@ public class Block {
 			return true;
 		return false;
 	}
-
-	public Vector collideWith(Vector point) {
+	public Block collideWith(Vector point) {
 		// May not actually be sat.
 		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
 		boolean collide = false;
@@ -161,7 +163,7 @@ public class Block {
 		}
 		if (!collide)
 			return null;
-		return point;
+		return this;
 	}
 	public boolean checkLine(ArrayList<Vector> vecs2) {
 		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
@@ -187,50 +189,50 @@ public class Block {
 		}
 		return false;
 	}
-	public static Vector collideWith(Group group,Vector vec) {
-		Vector dis;
+	public static Block collideWith(Group group,Vector vec) {
+		Block block;
 		for(Block obj: group.get()) {
-			dis =obj.collideWith(vec);
-			if (dis != null)
-				return dis;
+			block =obj.collideWith(vec);
+			if (block != null)
+				return block;
 		}
 		return null;
 	}
-	public Vector collideWith(Group group) {
-		Vector vec;
+	public Block collideWith(Group group) {
+		Block block;
 		for(Block obj: group.get()) {
-			vec =obj.collideWith(this);
-			if (vec != null)
-				return vec;
+			block =obj.collideWith(this);
+			if (block != null)
+				return block;
 		}
 		return null;
 	}
 
-	public Vector collideWith(Block obj) {
+	public Block collideWith(Block obj) {
 		ArrayList<Vector> vecs = getNonEmpty(this.vecs);
 		ArrayList<Vector> vecs2 = obj.getNonEmpty(obj.getPoints());
-		if (vecs.size() == 4 && vecs2.size() == 4 && Math.toDegrees(angle)%90 == 0) {
+		if (vecs.size() == 4 && vecs2.size() == 4 && angle%90 == 0) {
 			if (checkQuad(vecs2))
-				return obj.getDisplacement();
+				return this;
 		}
 		if (vecs2.size() == 2) {
 			if (checkLine(vecs2))
-				return obj.getDisplacement();
+				return this;
 			return null;
 		}
 		for (int a = 0; a < vecs.size(); a++) {
 			int b = (a + 1) % vecs.size();
 			Vector axis = new Vector(-(getPoint(b).getY() - getPoint(a).getY()),
 					getPoint(b).getX() - getPoint(a).getX());
-			double min = 100000000;
-			double max = -100000000;
+			double min = Double.MAX_VALUE;
+			double max = Double.MIN_VALUE;
 			for (int p = 0; p < getSize(); p++) {
 				double dot = getPoint(p).dotProd(axis);
 				min = Math.min(min, dot);
 				max = Math.max(max, dot);
 			}
-			double min2 = 100000000;
-			double max2 = -100000000;
+			double min2 = Double.MAX_VALUE;
+			double max2 = Double.MIN_VALUE;
 			for (int p = 0; p < vecs2.size(); p++) {
 				double dot = vecs2.get(p).dotProd(axis);
 				min2 = Math.min(min2, dot);
@@ -239,7 +241,7 @@ public class Block {
 			if (!(max2 >= min && max >= min2))
 				return null;
 		}
-		return obj.getDisplacement();
+		return this;
 	}
 
 	public Polygon getPoly() {
@@ -271,98 +273,132 @@ public class Block {
 		return null;
 	}
 	public void fill(Graphics g) {
+		if(!isSticky)updateOffset();
 		displacement.setPos(0,0);
 		Polygon poly = getPoly();
+		if(outsideWindow(poly.getBounds())) return;
+		Color oldColor=g.getColor();
+		if(blockColor!=null)g.setColor(blockColor);
 		g.fillPolygon(poly);
 		g.drawPolygon(poly);
+		g.setColor(oldColor);
 	}
-
+	private boolean outsideWindow(Rectangle rect) {
+		Rectangle bounds=new Rectangle(0,0,Window.getWidth(),Window.getHeight());
+		return !rect.intersects(bounds);
+	}
+	public void updateOffset() {
+		offset.setPos(Camera.getPos().getX(),Camera.getPos().getY());
+	}
 	public void draw(Graphics g) {
+		if(!isSticky)updateOffset();
 		displacement.setPos(0,0);
 		Polygon poly = getPoly();
+		if(outsideWindow(poly.getBounds())) return;
+		Color oldColor=g.getColor();
+		if(blockColor!=null)g.setColor(blockColor);
 		g.drawPolygon(poly);
+		g.setColor(oldColor);
 	}
 
 	public Block setImage(String path) {
-		this.path = path;
 		try {
 			img = ImageIO.read(new File(path));
+			this.path = path;
 		} catch (IOException e) {
 		}
 		return this;
 	}
-
-	public void drawImage(Graphics g) {
+	public void drawRectImg(Graphics g) {
+		if(img==null) {
+			fill(g);
+			return;
+		}
+		if(!isSticky)updateOffset();
 		displacement.setPos(0,0);
+		if(outsideWindow(getPoly().getBounds())) return;
+		Polygon poly = getOrgPoly();
+		Rectangle rect = poly.getBounds();
 		if (img != null) {
+			double locX = img.getWidth() / 2;
+			double locY = img.getHeight() / 2;
+			AffineTransform tx = AffineTransform.getRotateInstance(-Math.toRadians(angle), locX, locY);
+			AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+			g.drawImage(op.filter(img, null),(int)(pos.getX()+offset.getX())+rect.x,(int)(pos.getY()+offset.getY())+rect.y,null);
+		}
+	}
+	public void drawImage(Graphics g) {
+		if(!isSticky)updateOffset();
+		displacement.setPos(0,0);
+		if(vecs.size()==4) drawRectImg(g);
+		else {
 			Rectangle r = new Rectangle(0, 0, img.getWidth(), img.getHeight());
 			drawImage(g, r);
 		}
 	}
 	
 	public void drawImage(Graphics g, int x, int y, int w, int h) {
+		if(!isSticky)updateOffset();
 		displacement.setPos(0,0);
+		if(vecs.size()==4) drawRectImg(g);
 		Rectangle r = new Rectangle(x, y, w, h);
 		drawImage(g, r);
 	}
 
 	private void drawImage(Graphics g, Rectangle clip) {
-		displacement.setPos(0,0);
+		if(img==null) {
+			fill(g);
+			return;
+		}
+		if(outsideWindow(getPoly().getBounds())) return;
 		Polygon poly = getOrgPoly();
 		Rectangle rect = poly.getBounds();
 		poly.translate(-rect.x, -rect.y);
 		BufferedImage out = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
 		double x = clip.width / 2;
 		double y = clip.height / 2;
-		AffineTransform tx = AffineTransform.getRotateInstance(-angle,x,y);
+		AffineTransform tx = AffineTransform.getRotateInstance(-Math.toRadians(angle),x,y);
 		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 		Graphics g2 = out.getGraphics();
 		g2.setClip(poly);
 		g2.drawImage(op.filter(img, null), clip.x, clip.y, clip.width, clip.height, null);
-		g.drawImage(out, (int) pos.getX() + rect.x, (int) pos.getY() + rect.y, null);
+		g.drawImage(out, (int) (pos.getX()+offset.getX()) + rect.x, (int) (pos.getY()+offset.getY()) + rect.y, null);
 	}
 	public void resetDisplacement() {
 		displacement.setPos(0,0);
 	}
-	public Block setAngle(double angle) {
-		this.angle = Math.toRadians(angle % 360);
+	public Block setAngle(int angle) {
+		this.angle = angle % 360;
 		return this;
 	}
 
-	public void rotate(double angle) {
-		this.angle += Math.toRadians(angle % 360);
+	public void rotate(int angle) {
+		this.angle = (this.angle+angle)% 360;
 		rotate();
 	}
 
 	public void lookAt(double x, double y) {
-		double distX = pos.getX() - x;
-		double distY = pos.getY() - y;
-		angle = Math.toRadians(new Vector(-distX, distY).getAngle());
+		double dx=x-pos.add(offset).getX();
+		double dy=(y-pos.add(offset).getY());
+		double angle=Math.atan2(dy, dx);
+		if (angle < 0)angle = Math.abs(angle);
+		else angle= 2 * Math.PI - angle;
+		this.angle= (int)Math.toDegrees(angle)%360;
 		rotate();
 	}
-	public void lookAtOffset(double x, double y, double offX, double offY) {
-		double distX = (pos.getX()+offX) - x;
-		double distY = (pos.getY()+offY) - y;
-		angle = Math.toRadians(new Vector(-distX, distY).getAngle());
-		rotate();
-	}
-
 
 	public void rotate() {
-		setAndRotate(pos.getX(),pos.getY());
-	}
-	public void setAndRotate(double x2, double y2) {
 		Vector vec = getCenter();
 		for (int i = 0; i < getSize(); i++) {
 			double x=vecsOrg.get(i).getX()-vec.getX();
 			double y=vecsOrg.get(i).getY()-vec.getY();
-			double xRot = (x * Math.cos(angle) - y * Math.sin(angle));
-			double yRot = -(x * Math.sin(angle) + y * Math.cos(angle));
-			vecs.set(i, new Vector((vec.getX() + xRot)+x2,
-					(vec.getY() + yRot)+y2));
+			double xRot = (x * Math.cos(Math.toRadians(angle)) - y * Math.sin(Math.toRadians(angle)));
+			double yRot = -(x * Math.sin(Math.toRadians(angle)) + y * Math.cos(Math.toRadians(angle)));
+			vecs.set(i, new Vector((vec.getX() + xRot)+pos.getX()+offset.getX(),
+					(vec.getY() + yRot)+pos.getY()+offset.getY()));
 		}
 	}
-
+	
 	private ArrayList<Vector> getNonEmpty(ArrayList<Vector> vecs) {
 		ArrayList<Vector> notEmpties = new ArrayList<Vector>();
 		for (int i = 0; i < getSize(); i++) {
@@ -388,19 +424,19 @@ public class Block {
 	public Block clone() {
 		Block tmp = new Block();
 		for (int i = 0; i < getSize(); i++) {
-			if (!emptyPoint.get(i))
-				tmp.addPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
-			else
-				tmp.addEmptyPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
-			tmp.setAngle(angle);
+			if (!emptyPoint.get(i)) tmp.addPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
+			else tmp.addEmptyPoint( getOrgPoint(i).getX(),  getOrgPoint(i).getY());
+			tmp.setAngle(getAngle());
 			tmp.setImage(path);
+			tmp.setColor(blockColor);
+			tmp.setSticky(getSticky());
 		}
 		return tmp;
 	}
 	public void setPoints(double x, double y) {
 		for (int i = 0; i < getSize(); i++) {
-			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x, 
-					vecsOrg.get(i).getY() + y));
+			vecs.set(i,new Vector(vecsOrg.get(i).getX() + x+offset.getX(), 
+					vecsOrg.get(i).getY() + y+offset.getY()));
 		}
 	}
 	public String toString() {
@@ -427,6 +463,28 @@ public class Block {
 			else addPoint(tmpX,tmpY);
 		}
 		updatePos(x,y);
+		return this;
+	}
+	public Vector getOffset() {
+		return offset;
+	}
+	public Block addRectImage(String path, int x, int y) {
+		setImage(path);
+		if(img!=null) addRect(x,y,img.getWidth(),img.getHeight());
+		return this;
+	}
+	public boolean isNew() {
+		return vecs.isEmpty();
+	}
+	public String getImage() {
+		return path;
+	}
+	public Color getColor() {
+		return blockColor;
+	}
+	
+	public Block setColor(Color color) {
+		blockColor=color;
 		return this;
 	}
 }

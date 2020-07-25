@@ -3,6 +3,8 @@ package Latte;
 import java.awt.KeyEventDispatcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -10,47 +12,49 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.HashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.swing.JFrame;
 
+import Latte.Flat.TriConsumer;
 import Latte.Flat.Vector;
 
 public class Listener
-		implements ActionListener, WindowListener, KeyEventDispatcher, MouseListener, MouseMotionListener {
+		implements ActionListener, WindowListener, KeyEventDispatcher, 
+		MouseListener, MouseMotionListener, FocusListener {
 
 	protected static int state = JFrame.NORMAL;
-
-	protected static Caller closeCaller = new Caller();
-	protected static Caller minCaller = new Caller();
-	protected static Caller maxCaller = new Caller();
-	protected static Caller keyDownCaller = new Caller();
-	protected static Caller keyUpCaller = new Caller();
-	protected static Caller mouseDownCaller = new Caller();
-	protected static Caller mouseUpCaller = new Caller();
-	protected static Caller mouseMoveCaller = new Caller();
+	protected static boolean isFocused=false;
+	protected static Runnable closeFunc;
+	protected static Runnable minFunc;
+	protected static Runnable maxFunc;
+	protected static Consumer<String> keyDownFunc;
+	protected static Consumer<String> keyUpFunc;
+	protected static TriConsumer<Integer,Integer,Integer> mouseDownFunc;
+	protected static TriConsumer<Integer,Integer,Integer> mouseUpFunc;
+	protected static BiConsumer<Integer,Integer> mouseMoveFunc;
 	protected static Vector mousePos = new Vector(0, 0);
 	protected static HashMap<String, Boolean> isKeyDown = new HashMap<String, Boolean>();
-	protected static HashMap<String, Boolean> isMouseDown = new HashMap<String, Boolean>();
+	protected static HashMap<Integer, Boolean> isButtonDown = new HashMap<Integer, Boolean>();
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 		state = Window.jframe.getExtendedState();
 
-		if (!closeCaller.isEmpty() && evt.getActionCommand().equals("X"))
-			closeCaller.call();
+		if (closeFunc!=null && evt.getActionCommand().equals("X"))
+			closeFunc.run();
 		else if (evt.getActionCommand().equals("X"))
 			System.exit(0);
-		else if (!minCaller.isEmpty() && evt.getActionCommand().equals("_"))
-			minCaller.call();
+		else if (minFunc!=null && evt.getActionCommand().equals("_"))
+			minFunc.run();
 		else if (evt.getActionCommand().equals("_"))
 			Window.jframe.setExtendedState(JFrame.ICONIFIED);
-		else if (!maxCaller.isEmpty())
-			maxCaller.call();
+		else if (maxFunc!=null) maxFunc.run();
 		else {
 			if (Window.jframe.getExtendedState() == JFrame.NORMAL)
 				Window.jframe.setExtendedState(JFrame.MAXIMIZED_BOTH);
-			else
-				Window.jframe.setExtendedState(JFrame.NORMAL);
+			else Window.jframe.setExtendedState(JFrame.NORMAL);
 		}
 	}
 
@@ -87,8 +91,7 @@ public class Listener
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		moveWindow(e.getXOnScreen(), e.getYOnScreen());
-		if (!mouseMoveCaller.isEmpty())
-			mouseMoveCaller.call(e.getX(), e.getY());
+		if (mouseMoveFunc!=null) mouseMoveFunc.accept(e.getX(), e.getY());
 	}
 
 	private void moveWindow(int x, int y) {
@@ -99,8 +102,7 @@ public class Listener
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		if (!mouseMoveCaller.isEmpty())
-			mouseMoveCaller.call(e.getX(), e.getY());
+		if (mouseMoveFunc!=null) mouseMoveFunc.accept(e.getX(), e.getY());
 	}
 
 	@Override
@@ -117,9 +119,9 @@ public class Listener
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		isButtonDown.put(e.getButton(),true);
 		setMousePos(e.getXOnScreen(), e.getYOnScreen(), e.getX(), e.getY());
-		if (!mouseDownCaller.isEmpty())
-			mouseDownCaller.call(e.getX(), e.getY(), e.getButton());
+		if (mouseDownFunc!=null) mouseDownFunc.accept(e.getX(), e.getY(), e.getButton());
 	}
 
 	private void setMousePos(int x, int y, int currX, int currY) {
@@ -134,21 +136,31 @@ public class Listener
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		isButtonDown.put(e.getButton(),false);
 		mousePos.setPos(0, 0);
-		if (!mouseUpCaller.isEmpty())
-			mouseUpCaller.call(e.getX(), e.getY(), e.getButton());
+		if (mouseUpFunc!=null) mouseUpFunc.accept(e.getX(), e.getY(), e.getButton());
 	}
 
 	@Override
 	public boolean dispatchKeyEvent(KeyEvent e) {
 		isKeyDown.put(KeyEvent.getKeyText(e.getKeyCode()), (e.getID() == KeyEvent.KEY_PRESSED) ? true : false);
 		if (e.getID() == KeyEvent.KEY_PRESSED) {
-			if (!keyDownCaller.isEmpty())
-				keyDownCaller.call(KeyEvent.getKeyText(e.getKeyCode()));
+			if (keyDownFunc!=null)
+				keyDownFunc.accept(KeyEvent.getKeyText(e.getKeyCode()));
 		} else {
-			if (!keyUpCaller.isEmpty())
-				keyUpCaller.call(KeyEvent.getKeyText(e.getKeyCode()));
+			if (keyUpFunc!=null)
+				keyUpFunc.accept(KeyEvent.getKeyText(e.getKeyCode()));
 		}
 		return false;
+	}
+
+	@Override
+	public void focusGained(FocusEvent e) {
+		isFocused=true;
+	}
+
+	@Override
+	public void focusLost(FocusEvent e) {
+		isFocused=false;
 	}
 }

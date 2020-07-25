@@ -3,14 +3,28 @@ package Latte.Flat;
 public class Vector {
 	private double x=0;
 	private double y=0;
+	private double w=1;
 	public Vector() {}
 	public Vector(double x, double y) {
 		this.x=round(x);
 		this.y=round(y);
 	}
+	public Vector(double x, double y, double w) {
+		setPos(x,y);
+		setW(w);
+	}
+	public void setW(double w) {
+		this.w=round(w);
+	}
+	public double getW() {
+		return w;
+	}
 	public void setPos(double x, double y) {
 		this.x=round(x);
 		this.y=round(y);
+	}
+	public boolean equals(Vector vec) {
+		return x==vec.getX()&&y==vec.getY();
 	}
 	public double getX() {return x;}
 	public double getY() {return y;}
@@ -35,10 +49,10 @@ public class Vector {
 		double y= getY()-other.getY();
 		return Math.sqrt(x*x+y*y);
 	}
-	public double getAngle() {
+	public int getAngle() {
 		double angle= Math.atan2(y,x);
 		if(angle<0)angle+=2*Math.PI;
-		return Math.toDegrees(angle);
+		return (int) Math.toDegrees(angle)%360;
 	}
 	
 	public Vector convertVector(double mag, double angle) {
@@ -71,5 +85,27 @@ public class Vector {
 	}
 	public String toString() {
 		return x+" "+y;
+	}
+	public Vector setUV(double t,Vector outside, Vector inside) {
+		double u= t * (outside.getX() - inside.getX()) + inside.getX();
+		double v= t * (outside.getY() - inside.getY()) + inside.getY();
+		double w= t * (outside.getW() - inside.getW()) + inside.getW();
+		return new Vector(u,v,w);
+	}
+	public static Vector load(String line) {
+		String split[]=line.split(" ");
+		double x=Double.parseDouble(split[0]);
+		double y=Double.parseDouble(split[1]);
+		return new Vector(x,y);	
+	}
+	public Vector multi(Vector vec) {
+		double x=this.x*vec.getX();
+		double y=this.y*vec.getY();
+		return new Vector(x,y);
+	}
+	public Vector div(Vector vec) {
+		double x=this.x/vec.getX();
+		double y=this.y/vec.getY();
+		return new Vector(x,y);
 	}
 }

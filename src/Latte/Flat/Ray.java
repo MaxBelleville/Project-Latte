@@ -39,17 +39,17 @@ public class Ray {
 		ray.draw(g);
 	}
 	
-	public Vector updateTillCollide(Vector start, Vector end, Group...groups) {
+	public Vector updateTillCollide(Vector start, Vector end,double precision, Group...groups) {
 		Vector dir=(end.sub(start)).normalize();
 		double dist = end.getDistance(start);
 		if(oldDir!=dir) {
 		ray.setPoint(0,start.getX(),start.getY());
 		ray.setPoint(1,start.getX(),start.getY());
-		loop: for(int i=0;i<dist;i++) {
+		loop: for(int i=0;i<dist/ precision;i++) {
 			for(Group group: groups) {
 				if(ray.collideWith(group)!=null) break loop;
 			}
-			ray.setPoint(1,start.getX()+dir.getX()*i,start.getY()+dir.getY()*i);
+			ray.setPoint(1,start.getX()+dir.getX()*(i*precision),start.getY()+dir.getY()*(i*precision));
 		}
 		}
 		oldDir=dir;

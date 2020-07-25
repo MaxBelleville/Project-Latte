@@ -1,14 +1,21 @@
 package Latte;
 
+import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 
 import Latte.Flat.Group;
+import Latte.Frothy.Camera3;
 import Latte.Flat.Block;
 
 
@@ -19,6 +26,7 @@ public class Window {
 	protected static boolean displayFps=false;
 	protected static JFrame jframe = new JFrame();
 	protected static drawPanel panel;
+	protected static JLayeredPane mainPanel = new JLayeredPane();
 	private Listener listener =new Listener();
 	private Color closeColor=new Color(255, 0, 0);
 	private Color buttonColor=new Color(50, 150, 255);
@@ -73,7 +81,7 @@ public class Window {
 		fullscreen=true;
 		return this;
 	}
-	public Handler init() {
+	public void init() {
 		if (fullscreen) {
 			Listener.state=Window.jframe.getExtendedState();
 			jframe.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -84,17 +92,37 @@ public class Window {
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(listener);
 		jframe.addMouseListener(listener);
 		jframe.addMouseMotionListener(listener);
+		jframe.addFocusListener(listener);
 		jframe.setLocationRelativeTo(null);
-		setupMenu();
+		jframe.setBackground(windowBack);
 		panel = new drawPanel();
-		panel.setLayout(null);
-		panel.setBackground(windowBack);
+		panel.setBorder(new LineBorder(new Color(0,0,0,0.5f),1));
 		jframe.setContentPane(panel);
+		setupMenu();
 		jframe.getJMenuBar().setVisible(showMenu);
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		panel.setBorder(new LineBorder(new Color(0,0,0,0.5f),1));
 		jframe.setVisible(true);
-		return new Handler();
+		Camera3.setupProjection();
+	}
+	public Window hideCursor() {
+		jframe.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(
+				new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB ),
+                new Point(),
+                null));
+		return this;
+	}
+	public Window setCursor(Cursor cur) {
+		jframe.setCursor(cur);
+		return this;
+	}
+	public static void lockMouseCenter() {
+		Robot bot;
+		if(Listener.isFocused) {
+		try {
+			bot = new Robot();
+			bot.mouseMove(jframe.getWidth()/2,jframe.getHeight()/2);
+		} catch (AWTException e) {}
+		}
 	}
 	private JButton setupButton(String title, Color hoverColor) {
 		JButton button = new JButton(title);

@@ -1,5 +1,6 @@
 package Latte.Flat;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,12 +12,14 @@ public class Navigation {
 	private Node end;
 	private Vector savedStart= new Vector();
 	private Vector savedEnd= new Vector();
+	private Vector offset= new Vector();
 	private int w=0;
 	private int h=0;
 	
 	public void setupGrid(int w, int h, Vector offset, Vector spacer) {
 		this.w=w;
 		this.h=h;
+		this.offset=offset;
 		nodes=new Node[w*h];
 		for(int x=0;x<w;x++) {
 			for(int y=0;y<h;y++) {
@@ -39,12 +42,12 @@ public class Navigation {
 			}
 		}
 	}
-	public void updateGrid(Vector offset,Vector spacer) {
+	public void updateGrid(Vector pos,Vector spacer) {
 		for(int x=0;x<w;x++) {
 			for(int y=0;y<h;y++) {
-				double xShift=(x*spacer.getX())+offset.getX();
-				double yShift=(y*spacer.getY())+offset.getY();
-				nodes[y*w+x].pos=new Vector(xShift,yShift);
+				double xShift=(x*spacer.getX())+pos.getX();
+				double yShift=(y*spacer.getY())+pos.getY();
+				nodes[y*w+x].pos= offset.add(new Vector(xShift,yShift));
 			}
 		}
 	}
@@ -126,6 +129,24 @@ public class Navigation {
 					notTested.add(neighbour);
 			}
 		}
+	}
+	public void debugBlocks(Graphics g) {
+		for(int x=0;x<w;x++) {
+			for(int y=0;y<h;y++) {
+				int r=0;
+				int gr=0;
+				if(nodes[y*w+x].visted) r=255;
+				if(nodes[y*w+x].obstacale) gr=255;
+				g.setColor(new Color(r,gr,0,150));
+				g.fillRect((int)nodes[y*w+x].pos.getX(),(int)nodes[y*w+x].pos.getY(),32,32);
+			}
+		}
+	}
+	public Vector getGridStart() {
+		return nodes[0].pos;
+	}
+	public Vector getGridEnd() {
+		return nodes[nodes.length-1].pos;
 	}
 }
 class Node implements Comparable<Node> {

@@ -13,31 +13,33 @@ import Latte.*;
 import Latte.Flat.*;
 
 public class GameMain {
-	protected static Handler handler;
 	private static Player player;
 	private static int layI = 0;
+	private static boolean reading=false;
 	private static Sound sound = new Sound("Music/1.mp3");
 	private static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
-	private static Layer layer[] = { new Layer("floor", "wall"), new Layer("floor", "wall") };
-	private static Light light = new Light();
-	private static Enemy enemy = new Enemy(false);
-
+	private static ArrayList<Layer> layers = new ArrayList<Layer>();
+	private static Enemy enemy = new Enemy(true);
 	
 	public GameMain() {
-	if(!Server.serverExists("localhost",1100))Server.start(1100);
-	Client.start();
-	Client.connect("localhost",1100);
-		handler.clearElements();
-		player = new Player(handler);
-		handler.onMouseMove("mouseMove");
-		handler.onMouseDown("mouseDown");
-		handler.onKeyDown("keyDown");
-		IO.readPlain("level1-1.amap");
-		layer[0].load(IO.loadNext());
-		layer[1]=layer[0];
-		layer[0].setupNav();
-		light.updateLight(100,300,200,layer[0].get("wall"));
-		handler.draw("update");
+		Handler.clearElements();
+		player = new Player();
+		Handler.onMouseMove(GameMain::mouseMove);
+		Handler.onMouseDown(GameMain::mouseDown);
+		Handler.onKeyDown(GameMain::keyDown);
+		IO file = new IO();
+		file.readPlain("map1.amap");
+		while(file.hasNext()) {
+			String[] split =file.loadNext().split("; ");
+			Layer layer =new Layer();
+			layer.setHidden(split[0].endsWith("true"));
+			layer.load(split[1]);
+			layers.add(layer);
+		}
+		layers.get(0).setupNav(new Vector(15,6),new Vector(1984,864));
+		Vector playerVec=layers.get(0).get("Entites").get(0).getOrgPoint(0);
+		player.setSpawn(playerVec);
+		Handler.draw(GameMain::update);
 		for(int i=2;i<16;i++)
 			sound.addToQueue("Music/"+i+".mp3");
 		sound.randomize();
@@ -46,17 +48,20 @@ public class GameMain {
 	}
 	
 	public static void main(String[] args) {
-		handler = new Window().hideMenu().fullscreen().icon("bullet.png").setBackground(Color.black).init();
+		new Window().setBackground(Color.black).size(500,500).icon("bullet.png").init();
 		startMenu();
 	}
 	private static void startMenu() {
 		JButton button = setupButton("Start");
 		JButton settings = setupButton("Settings");
 		JButton exit = setupButton("Exit");
-		handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
-		handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
-		handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
+		Handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
+		Handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
+		Handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
 		button.addActionListener(e -> {
+			if(!Server.serverExists("192.168.50.206",8000))Server.start(8000);
+			Client.start();
+			Client.connect("192.168.50.206",8000);
 			new GameMain();
 		});
 		exit.addActionListener(e -> {System.exit(0);});
@@ -75,28 +80,34 @@ public class GameMain {
 
 	public static void keyDown(String key) {
 		if (key.equals("Escape")) {
-			handler.canDraw(!handler.isDrawing());
-			if (!handler.isDrawing()) {
+			Handler.canDraw(!Handler.isDrawing());
+			if (!Handler.isDrawing()) {
 				JButton button = setupButton("Continue");
 				JButton settings = setupButton("Settings");
 				JButton exit = setupButton("Exit");
-				handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
-				handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
-				handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
+				Handler.addElement(button, (Window.getWidth() / 2) - 100, 100, 200, 40);
+				Handler.addElement(settings, (Window.getWidth() / 2) - 100, (Window.getHeight() / 2), 200, 40);
+				Handler.addElement(exit, (Window.getWidth() / 2) - 100, (Window.getHeight())-100, 200, 40);
 				button.addActionListener(e -> {
-					handler.canDraw(!handler.isDrawing());
+					Handler.canDraw(!Handler.isDrawing());
 					sound.play();
-					handler.clearElements();
+					Handler.clearElements();
 				});
 				exit.addActionListener(e -> {System.exit(0);});
 			} else {
 				sound.play();
-				handler.clearElements();
+				Handler.clearElements();
 			}
 		}
-		if (handler.isDrawing()) {
-			if (key.equals("Up") && layI < layer.length - 1)layI++;
-			if (key.equals("Down") && layI > 0)layI--;
+		if (Handler.isDrawing()) {
+			if (key.equals("Up") && layI < layers.size() - 1) {
+				if(!layers.get(layI+1).isHidden())layI++;
+				else if(layI < layers.size() - 2)layI+=2;
+			}
+			if (key.equals("Down") && layI > 0) {
+				if(!layers.get(layI-1).isHidden())layI--;
+				else if(layI >-1)layI-=2;
+			}
 		}
 	}
 
@@ -106,72 +117,82 @@ public class GameMain {
 	}
 
 	public static void mouseDown(int x, int y, int button) {
-		if (handler.isDrawing()) {
+		if (Handler.isDrawing()) {
 			if (button == 1 && layI == player.getLayer()) {
-				//bullets.add(new Bullet(2500, player.getEmpty(0),new Vector(x,y)).setMovement(16,0));
-				Client.send("2500 "+player.getEmpty(0)+" "+new Vector(x, y)+" 16 0");
+				Client.send("2500 "+player.getEmpty(0)+" "+new Vector(x, y)+" 8 0");
 			}
 			if (button == 3) {
 				player.setNearWall(false);
 				player.setNearEdge(false);
-				handler.onCollide("stopTeleport", new Vector(x, y), layer[layI].get("wall"));
-				handler.onCollide("mouseInside", new Vector(x, y), Window.getBorder(50, 50));
-				handler.onCollide("canTeleport", new Vector(x, y), layer[layI].get("floor"));
+				Block tempBlock=new Block().addRect(x-10,y-10,20,20);
+				if(layers.get(layI).get("Wall")!=null)Handler.onCollide(GameMain::stopTeleport, tempBlock, layers.get(layI).get("Wall"));
+				Handler.onCollide(GameMain::mouseInside, tempBlock, Window.getBorder(60, 60));
+				Handler.onCollide(GameMain::canTeleport, tempBlock, layers.get(layI).get("Floor"));
 			}
 		}
 	}
-	public static void stopTeleport(int x, int y) {
+	public static void stopTeleport(Block wall) {
 		player.setNearWall(true);
 	}
-	public static void mouseInside(int x, int y) {
+	public static void mouseInside(Block border) {
 		player.setNearEdge(true);
 	}
 
-	public static void touchWall(int x, int y) {
+	public static void touchWall(Block wall) {
+		double x= wall.getDisplacement().getX();
+		double y= wall.getDisplacement().getY();
 		Vector disp=player.getDisplacement();
 		if (Math.abs(x) > 5 || Math.abs(y) > 5)player.teleportStop();
 		player.updatePos((player.getPos().getX() - disp.getX()), (player.getPos().getY() - disp.getY()));
 	}
-
-	public static void exit(int x, int y) {
+	
+	public static void exit(Block border) {
 		Vector disp=player.getDisplacement();
 		Vector pos = player.getPos();
 		Camera.movePos(-disp.getX(), -disp.getY());
 		player.setLayer(layI);
-		Camera.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
-		Camera.updateGroups(light);
 		player.updatePos((pos.getX() - disp.getX()), (pos.getY() - disp.getY()));
 		for (int i = 0; i < bullets.size(); i++)bullets.get(i).moveBullet(-disp.getX(), -disp.getY());
 	}
-
-	public static void canTeleport(int x, int y) {
+	public static void touchEntity(Block entity) {
+		if(entity.getColor()==Color.orange) {
+			layI++;
+			player.setLayer(layI);
+		}
+		if(entity.getColor()==Color.blue) {
+			layI--;
+			player.setLayer(layI);
+		}
+	}
+	public static void canTeleport(Block floor) {
 		if(player.getNearEdge()&&player.getCooldown()==0) {
 			for (int i = 0; i < bullets.size(); i++)
 				bullets.get(i).moveBullet(player.getPos().getX() - player.getMousePos().getX(), 
 						player.getPos().getY() - player.getMousePos().getY());
 		}
-		player.canTeleport(layer[layI],layI,light);
+		player.canTeleport(layI);
 	}
 	public static void update(Graphics g,double delta) {
 		double speed = 3*delta;
-		if (handler.getKeyPressed("Shift"))speed = 6*delta;
-		if (handler.getKeyPressed("W"))player.updatePos(player.getPos().getX(), player.getPos().getY() - speed);
-		if (handler.getKeyPressed("A"))player.updatePos(player.getPos().getX() - speed, player.getPos().getY());
-		if (handler.getKeyPressed("D"))player.updatePos(player.getPos().getX() + speed, player.getPos().getY());
-		if (handler.getKeyPressed("S"))player.updatePos(player.getPos().getX(), player.getPos().getY() + speed);
-		handler.onCollide("touchWall", player, layer[layI].get("wall"));
-		handler.onCollide("exit", player, Window.getBorder(50, 50));
+		if (Handler.getKeyPressed("Shift"))speed = 4*delta;
+		if (Handler.getKeyPressed("W"))player.updatePos(player.getPos().getX(), player.getPos().getY() - speed);
+		if (Handler.getKeyPressed("A"))player.updatePos(player.getPos().getX() - speed, player.getPos().getY());
+		if (Handler.getKeyPressed("D"))player.updatePos(player.getPos().getX() + speed, player.getPos().getY());
+		if (Handler.getKeyPressed("S"))player.updatePos(player.getPos().getX(), player.getPos().getY() + speed);
+		if(layers.get(layI).get("Wall")!=null)Handler.onCollide(GameMain::touchWall, player, layers.get(layI).get("Wall"));
+		if(layers.get(layI).get("Entites")!=null)Handler.onCollide(GameMain::touchEntity,player, layers.get(layI).get("Entites"));
+		Handler.onCollide(GameMain::exit, player, Window.getBorder(60, 60));
 		sound.updateQueue();
 		sound.setVolume(0.1);
-		layer[layI].draw(g);
+		layers.get(layI).draw(g);
 		end: for (int i = 0; i < bullets.size(); i++) {
 			bullets.get(i).update(delta);
 			if (layI == player.getLayer())bullets.get(i).draw(g);
 			Vector vec = bullets.get(i).getMovement();
 			for (int j = 0; j < bullets.size(); j++) {
 				if (bullets.get(i).onCollide(bullets.get(j).getObj()) && i != j) {
-					bullets.get(i).addAngle(45);
-					bullets.get(j).addAngle(-45);
+					bullets.get(i).addAngle(20);
+					bullets.get(j).addAngle(-20);
 					break end;
 				}
 			}
@@ -179,34 +200,38 @@ public class GameMain {
 			else if (bullets.get(i).onCollide(player) && bullets.get(i).getTick() >= 100) {
 				bullets.clear();
 				player.reset();
+				System.out.println("Death");
 				Camera.setPos(0,0);
-				Camera.updateGroups(layer[layI].get("floor"), layer[layI].get("wall"));
-				Camera.updateGroups(light);
-			} else if (bullets.get(i).onCollide(layer[layI].get("wall")))bullets.remove(i);
+			} else if (bullets.get(i).onCollide(layers.get(layI).get("Wall")))bullets.remove(i);
+			else if(bullets.get(i).onCollide(enemy) && bullets.get(i).getTick() >= 100) {
+				System.out.println("Kill");
+				bullets.remove(i);
+			}
 			else if (bullets.get(i).hasStopped())bullets.remove(i);
 		}
 		g.setColor(Color.black);
-		enemy.update(layer,player.getPos());
+		enemy.update(layers,player.getPos(),bullets);
 		enemy.fill(g);
-		player.draw(g,layer[layI].get("wall"),layI);
-		if (!handler.isDrawing()) {
+		player.draw(g,layers.get(layI).get("Wall"),layI);
+		if (!Handler.isDrawing()) {
 			sound.pause();
 			g.setColor(new Color(0, 0, 0, 0.5f));
 			g.fillRect(0, 0, Window.getWidth(), Window.getHeight());
 		}
-		//enemy.drawDebugPath(layer,g);
-		proccess();
-	}
-	private static void proccess() {
-		if(Client.hasData()) {
-			new Thread(() -> {
-				Vector vec=player.getPos();
-				while(Client.hasData()){
-					enemy.updateMP(vec.toString());
-					if(Bullet.check())
-						bullets.add(new Bullet());
-				}
-			}).start();
+		if(Client.hasData()&&!reading) {
+			reading=true;
+			Handler.onLoopTillComplete(GameMain::finishedReading,GameMain::readServer, p->(Client.hasData()==p));
 		}
+	}
+	
+	public static void finishedReading() {
+		reading=false;
+	}
+	
+	public static void readServer() {
+		Vector vec = player.getPoint(0);
+		enemy.updateMP(vec.toString());
+		if(Bullet.check())
+			bullets.add(new Bullet());
 	}
 }
