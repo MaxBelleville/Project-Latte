@@ -71,6 +71,9 @@ public class Block {
 	public int getAngle() {
 		return angle;
 	}
+	public void updatePos(Vector vec) {
+		updatePos(vec.getX(),vec.getY());
+	}
 	public void updatePos(double x, double y) {
 		displacement.setPos(displacement.getX()+(x - pos.getX()), 
 				displacement.getY()+(y - pos.getY()));
@@ -107,7 +110,9 @@ public class Block {
 		addPoint(x, y + h);
 		return this;
 	}
-
+	public Block addEmptyPoint(Vector vec) {
+		return addEmptyPoint(vec.getX(),vec.getY());
+	}
 	public Block addEmptyPoint(double x, double y) {
 		vecs.add(new Vector(vecs.get(0).getX() + x, vecs.get(0).getY() + y));
 		vecsOrg.add(new Vector(x,y));
@@ -126,7 +131,9 @@ public class Block {
 	public ArrayList<Vector> getPoints() {
 		return vecs;
 	}
-
+	public Block addPoint(Vector vec) {
+		return addPoint(vec.getX(),vec.getY());
+	}
 	public Block addPoint(double x, double y) {
 		vecs.add(new Vector(x, y));
 		vecsOrg.add(new Vector(x, y));
@@ -376,7 +383,9 @@ public class Block {
 		this.angle = (this.angle+angle)% 360;
 		rotate();
 	}
-
+	public void lookAt(Vector vec) {
+		lookAt(vec.getX(),vec.getY());
+	}
 	public void lookAt(double x, double y) {
 		double dx=x-pos.add(offset).getX();
 		double dy=(y-pos.add(offset).getY());

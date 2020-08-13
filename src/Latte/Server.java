@@ -116,6 +116,5 @@ class ClientInfo {
 		this.port=Integer.parseInt(port);
 	}
 	String host ="";
-	int port=0;
-	
+	int port=0;	
 }

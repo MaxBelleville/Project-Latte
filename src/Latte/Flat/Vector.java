@@ -6,8 +6,7 @@ public class Vector {
 	private double w=1;
 	public Vector() {}
 	public Vector(double x, double y) {
-		this.x=round(x);
-		this.y=round(y);
+		setPos(x,y);
 	}
 	public Vector(double x, double y, double w) {
 		setPos(x,y);
@@ -85,6 +84,12 @@ public class Vector {
 	}
 	public String toString() {
 		return x+" "+y;
+	}
+	public static Vector parseVector(String vec) {
+		String split[]=vec.split(" ");
+		double x=Double.parseDouble(split[0]);
+		double y=Double.parseDouble(split[1]);
+		return new Vector(x,y);
 	}
 	public Vector setUV(double t,Vector outside, Vector inside) {
 		double u= t * (outside.getX() - inside.getX()) + inside.getX();
